@@ -1,0 +1,31 @@
+{
+  "AssemblyPaths": [
+    "..\\..\\..\\..\\TestFuncsLib\\bin\\Debug\\net7.0\\TestFuncsLib.dll"
+  ],
+  "NbrEpochs": 1000,
+  "TrainingRate": 0.05,
+  "TrainingMomentum": 0.01,
+  "NbrInputs": 4,
+  "LayerConfigs": [
+    {
+      "NbrOutputs": 5,
+      "ActivationFunction": "NeuralNetworkLib.ActivationFunctions.TanhActivationFunction",
+      "InitialWeightRange": 0.01
+    },
+    {
+      "NbrOutputs": 3,
+      "ActivationFunction": "NeuralNetworkLib.ActivationFunctions.SoftMaxActivationFunction",
+      "InitialWeightRange": 0.01
+    }
+  ],
+  "FileSamplesGenerator": {
+    "FilePath": "./succinctly.csv",
+    "Separator": ",",
+    "SkipRows": 0,
+    "SkipColumns": 0,
+    "NbrOutputs": 3,
+    "RandomizeSamples": false
+  },
+  "TrainingFraction": 0.8,
+  "NeuralNetworkFuncs": "TestFuncsLib.IndexOfMaxMatches"
+}
