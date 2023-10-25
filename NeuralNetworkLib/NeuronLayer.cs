@@ -5,16 +5,15 @@
  * All Rights Reserved
 */
 
-//#define PRINTMSGS
-
 using NeuralNetworkLib.ActivationFunctions;
 using UtilitiesLib;
 
 namespace NeuralNetworkLib
 {
+    // Represents a Neuron Layer and its structure
     public class NeuronLayer
     {
-        private readonly int index;
+        // Data structures to perform training and testing
 
         private readonly int nbrInputs;         // Ni , indexed by j
         private readonly int nbrOutputs;        // No , indexed by k
@@ -34,18 +33,20 @@ namespace NeuralNetworkLib
         private readonly double[] signals;      // No
         private readonly double[] errorsOut;    // Ni (errors passed to the previous layer)
 
+        // The layer's activation function
         private readonly IActivationFunction af;
+
+        // The random number generator to be used for the layer's weights and biases initialization
         private readonly Random rnd;
 
+        // Constructor for the NeuronLayer class
         public NeuronLayer(
-            int index,
             int nbrInputs,
             int nbrOutputs,
             IActivationFunction af,
             Random rnd,
             double initialWeightRange)
         {
-            this.index = index;
             this.nbrInputs = nbrInputs;
             this.nbrOutputs = nbrOutputs;
             this.af = af;
@@ -81,6 +82,7 @@ namespace NeuralNetworkLib
             Reset(initialWeightRange);
         }
 
+        // Performs the feed-forward processing of the inputs to the layer to compute the outputs from the layer
         public double[] ComputeOutputs(
             double[] inputs)
         {
@@ -90,8 +92,11 @@ namespace NeuralNetworkLib
                 this.inputs[j] = inputs[j];
             }
 
+            // For each of the layer's neurons, compute its net value and output (from the layer's activation function)
             for (int k = 0; k < nbrOutputs; k++)
             {
+                // Compute the net value: sum(W*x+b)
+
                 nets[k] = biases[k];
 
                 for (int j = 0; j < nbrInputs; j++)
@@ -99,27 +104,22 @@ namespace NeuralNetworkLib
                     nets[k] += weights[k][j] * inputs[j];
                 }
 
+                // Compute the neuron's output (activation)
                 outputs[k] = af.Compute(nets[k]);
             }
 
+            // Call the Layer's Activation Function's to Post-Process the layer's outputs
             af.PostProcess(outputs);
-
-#if PRINTMSGS
-            Console.WriteLine($"Computed Outputs for Layer {index}:");
-            Utilities.PrintArray($"Inputs:", inputs);
-            Utilities.PrintArray($"Biases:", biases);
-            Utilities.PrintMatrix($"Weights:", weights);
-            Utilities.PrintArray($"Nets:", nets);
-            Utilities.PrintArray($"Outputs:", outputs);
-            Console.WriteLine();
-#endif
 
             return outputs;
         }
 
+        // Computes the errors that are propagated from this layer back to the previous layer
+        // Errors In -> Errors Out
         public double[] ComputeErrors(
             double[] errorsIn)
         {
+            // Compute the layer's signal array
             for (int k = 0; k < nbrOutputs; k++)
             {
                 derivatives[k] = af.Derivative(nets[k], outputs[k]);
@@ -127,6 +127,7 @@ namespace NeuralNetworkLib
                 signals[k] = errorsIn[k] * derivatives[k];
             }
 
+            // Compute the errors propagated to the previous layer
             for (int j = 0; j < nbrInputs; j++)
             {
                 errorsOut[j] = 0.0;
@@ -137,30 +138,24 @@ namespace NeuralNetworkLib
                 }
             }
 
-#if PRINTMSGS
-            Console.WriteLine($"Computed Errors for Layer {index}:");
-            Utilities.PrintArray($"ErrorsIn:", errorsIn);
-            Utilities.PrintArray($"Derivatives:", derivatives);
-            Utilities.PrintArray($"Signals:", signals);
-            Utilities.PrintMatrix($"WeightsT:", weightsT);
-            Utilities.PrintArray($"ErrorsOut:", errorsOut);
-            Console.WriteLine();
-#endif
-
             return errorsOut;
         }
 
+        // Updates the layers' weight matrix and bias array based on the learning rate and momentum
         public void Update(
             double rate,
             double momentum)
         {
+            // Update the layers' weight matrix and bias array
             for (int k = 0; k < nbrOutputs; k++)
             {
+                // Update the neuron's bias
                 gradientsB[k] = signals[k];
                 deltaB[k] = rate * gradientsB[k];
                 biases[k] += deltaB[k] + (prevDeltaB[k] * momentum);
                 prevDeltaB[k] = deltaB[k];
 
+                // Update the neuron's weight array
                 for (int j = 0; j < nbrInputs; j++)
                 {
                     gradientsW[k][j] = signals[k] * inputs[j];
@@ -170,16 +165,9 @@ namespace NeuralNetworkLib
                     prevDeltaW[k][j] = deltaW[k][j];
                 }
             }
-
-#if PRINTMSGS
-            Console.WriteLine($"Updated Layer {index}:");
-            Utilities.PrintArray($"Biases:", biases);
-            Utilities.PrintMatrix($"Weights:", weights);
-            Utilities.PrintMatrix($"WeightsT:", weightsT);
-            Console.WriteLine();
-#endif
         }
 
+        // Initializes the layer's weights and biases based on the specified value +/- range
         private void Reset(
             double initialWeightRange)
         {
@@ -195,21 +183,6 @@ namespace NeuralNetworkLib
                     weightsT[j][k] = weights[k][j] = rnd.NextDouble(minValue, valueRange);
                 }
             }
-
-#if PRINTMSGS
-            Console.WriteLine($"Reset Layer {index}:");
-            Utilities.PrintArray($"Biases:", biases);
-            Utilities.PrintMatrix($"Weights:", weights);
-            Console.WriteLine();
-#endif
-        }
-
-        public void Print()
-        {
-            Console.WriteLine($"Layer {index}:");
-            Utilities.PrintArray($"Biases:", biases);
-            Utilities.PrintMatrix($"Weights:", weights);
-            Console.WriteLine();
         }
     }
 }

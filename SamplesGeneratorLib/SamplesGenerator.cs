@@ -7,6 +7,7 @@
 
 namespace SamplesGeneratorLib
 {
+    // Abstract base class for Samples Generators
     public abstract class SamplesGenerator
     {
         protected int nbrValuesPerRecord;   // number of inputs (defined or calculated) + nbrOutputs

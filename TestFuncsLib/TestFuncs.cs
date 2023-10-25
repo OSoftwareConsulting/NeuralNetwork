@@ -12,6 +12,7 @@ using UtilitiesLib;
 // This assembly is loaded at runtime and specified in the test setup JSON files
 namespace TestFuncsLib
 {
+    // Example Samples Generator Function that computes Math.Sin
     public class MathSin : ISamplesGeneratorFunction
     {
         public void Compute(double[] x, double[] y)
@@ -20,7 +21,9 @@ namespace TestFuncsLib
         }
     }
 
-    public class IndexOfMaxMatches : INeuralNetworkFuncs
+    // An implementation of the INeuralNetworkFuncs interface that is used for Classification Prediction Problems using Class Binary Vectors
+    // The neural network will produce outputs, and the index with the maximum output value corresponds to the class
+    public class IndexOfMaxMatches : IUserDefinedFunctions
     {
         private int nbrTests;
         private int nbrInputs;
@@ -37,12 +40,14 @@ namespace TestFuncsLib
             avgPassed = 0.0;
         }
 
+        // Initialize data structures
         public void Configure(int nbrInputs, int nbrOutputs)
         {
             this.nbrInputs = nbrInputs;
             this.nbrOutputs = nbrOutputs;
         }
 
+        // Error Difference Function
         public void ComputeErrors(double[] targets, double[] outputs, double[] errors)
         {
             for (int k = 0; k < nbrOutputs; k++)
@@ -51,10 +56,12 @@ namespace TestFuncsLib
             }
         }
 
+        // Called after each testing sample to process the result
         public void ProcessTestResult(int index, double[] inputs, double[] targets, double[] outputs)
         {
             nbrTests++;
 
+            // Compute the Target & Output classes (Max. Index)
             int targetsMaxIdx = IndexOfMax(targets);
             int outputsMaxIdx = IndexOfMax(outputs);
 
@@ -73,6 +80,7 @@ namespace TestFuncsLib
             Console.WriteLine($", {targetsMaxIdx}, {outputsMaxIdx}, {pfStr}, {avgPassed.ToString("P1")}");
         }
 
+        // Print-out a summary of the test results
         public void SummarizeTestResults()
         {
             Console.WriteLine($"Average Tests Passed: {avgPassed.ToString("P1")}");
@@ -98,7 +106,8 @@ namespace TestFuncsLib
         }
     }
 
-    public class AbsErrors : INeuralNetworkFuncs
+    // An implementation of the INeuralNetworkFuncs interface that is used for Regression Prediction Problems using Absolute of Errors Distance Metric
+    public class AbsErrors : IUserDefinedFunctions
     {
         private int nbrTests;
         private int nbrInputs;
@@ -114,6 +123,7 @@ namespace TestFuncsLib
             nbrOutputs = 0;
         }
 
+        // Initialize data structures
         public void Configure(int nbrInputs, int nbrOutputs)
         {
             this.nbrInputs = nbrInputs;
@@ -124,6 +134,7 @@ namespace TestFuncsLib
             avgAbsErrors = new double[nbrOutputs];
         }
 
+        // Error Difference Function
         public void ComputeErrors(double[] targets, double[] outputs, double[] errors)
         {
             for (int k = 0; k < nbrOutputs; k++)
@@ -132,6 +143,7 @@ namespace TestFuncsLib
             }
         }
 
+        // Called after each testing sample to process the result
         public void ProcessTestResult(int index, double[] inputs, double[] targets, double[] outputs)
         {
             nbrTests++;
@@ -155,6 +167,7 @@ namespace TestFuncsLib
             Utilities.PrintValues(avgAbsErrors, addEOL: true);
         }
 
+        // Print-out a summary of the test results
         public void SummarizeTestResults()
         {
             Console.Write("Average Abs. Error(s): ");

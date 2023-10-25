@@ -5,8 +5,6 @@
  * All Rights Reserved
 */
 
-//#define PRINTMSGS
-
 using NeuralNetworkLib;
 using SamplesGeneratorLib;
 
@@ -15,23 +13,41 @@ namespace TestSetupLib
     public class TestSetup
     {
         // General
+
+        // The Random number generator used to compute all random numbers
         public Random Rnd { get; }
 
         // Data Set
+
+        // Number of Neural Network Inputs
         public int NbrInputs { get; }
+
+        // Number of Neural Network Outputs
         public int NbrOutputs { get; }
+
+        // The Training and Testing Samples
         public Samples Samples { get; }
 
         // Neural Network
+
+        // The neural network's layers' configurations
         public NeuronLayerConfig[] LayerConfigs { get; }
 
         // Training
+
+        // Number of Training Epochs (iterations)
         public int NbrEpochs { get; }
+
+        // The Training Rate for adjusting weights and biases (from the gradients)
         public double TrainingRate { get; }
+
+        // The Training Momentum for adjusting weights and biases (from the difference of delta's)
         public double TrainingMomentum { get; }
 
         // Testing
-        public INeuralNetworkFuncs NeuralNetworkFuncs { get; }
+
+        // The user-defined functions used during neural network training and testing (see IUserDefinedFunctions)
+        public IUserDefinedFunctions UserDefinedFunctions { get; }
 
         public TestSetup(
             Random rnd,
@@ -41,30 +57,20 @@ namespace TestSetupLib
             int nbrEpochs,
             double trainingRate,
             double trainingMomentum,
-            INeuralNetworkFuncs neuralNetworkFuncs)
+            IUserDefinedFunctions userDefinedFunctions)
         {
             Rnd = rnd;
             NbrInputs = nbrInputs;
-            NbrOutputs = layerConfigs[layerConfigs.Count() - 1].NbrOutputs; // The number of outputs is the number of outputs in the output layer
+            NbrOutputs = layerConfigs[layerConfigs.Count() - 1].NbrOutputs; // The number of outputs from the neural network is equal to the number of outputs from the last layer (L - 1)
             Samples = samples;
             LayerConfigs = layerConfigs;
             NbrEpochs = nbrEpochs;
             TrainingRate = trainingRate;
             TrainingMomentum = trainingMomentum;
-            NeuralNetworkFuncs = neuralNetworkFuncs;
+            UserDefinedFunctions = userDefinedFunctions;
 
-            NeuralNetworkFuncs.Configure(NbrInputs, NbrOutputs);
-
-#if PRINTMSGS
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            sb.Append($"{NbrInputs}");
-            for (int l = 0; l < LayerConfigs.Length; l++)
-            {
-                sb.Append($"-{LayerConfigs[l].NbrOutputs}");
-            }
-
-            Console.WriteLine($"Creating a {sb} network");
-#endif
+            // Initialize the User Defined Functions' data structures
+            UserDefinedFunctions.Configure(NbrInputs, NbrOutputs);
         }
     }
 }

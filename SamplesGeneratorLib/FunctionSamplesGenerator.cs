@@ -5,8 +5,6 @@
  * All Rights Reserved
 */
 
-//#define PRINTMSGS
-
 using UtilitiesLib;
 
 namespace SamplesGeneratorLib
@@ -18,6 +16,7 @@ namespace SamplesGeneratorLib
 
     public class FunctionSamplesGenerator : SamplesGenerator
     {
+        // Value range for an input
         public struct ValueRange
         {
             public double MinValue { get; }
@@ -37,6 +36,7 @@ namespace SamplesGeneratorLib
             }
         }
 
+        // Private constructor (calls the base class constructor)
         private FunctionSamplesGenerator(
             int nbrRecords,
             int nbrInputs,
@@ -52,6 +52,7 @@ namespace SamplesGeneratorLib
             }
         }
 
+        // Entry point to generate the records and training and testing sample sets
         public static Samples GetSamples(
             int nbrOutputs,
             double trainingFraction,
@@ -65,19 +66,19 @@ namespace SamplesGeneratorLib
                 valueRanges.Length,
                 nbrOutputs);
 
-            // The records are created with random input values
-            fdg.DoGenerateRecords(
+            // Generate the records by randomly setting the input values
+            fdg.GenerateRecords(
                 dataGeneratorFunction,
                 valueRanges,
                 rnd);
 
-            // So the samples do not have to be randomized
+            // The samples do not have to be randomized since the inputs are generated randomly
             return fdg.GetSamples(
                 trainingFraction,
                 rnd: null);
         }
 
-        private void DoGenerateRecords(
+        private void GenerateRecords(
             ISamplesGeneratorFunction dataGeneratorFunction,
             ValueRange[] valueRanges,
             Random rnd)
@@ -90,19 +91,18 @@ namespace SamplesGeneratorLib
 
             for (int n = 0; n < nbrRecords; n++)
             {
+                // Randomize the inputs based on the specified input value ranges
                 randomizeInputs(valueRanges, inputs, rnd);
 
+                // Call the user-define samples generator function (ISamplesGeneratorFunction) to compute the functions' output values
                 dataGeneratorFunction.Compute(inputs, outputs);
 
+                // Copy the inputs and outputs to the record
                 copyInputsAndOutputs(records[n], inputs, outputs);
-
-#if PRINTMSGS
-                Utilities.PrintValues(records[n]);
-                Console.WriteLine();
-#endif
             }
         }
 
+        // Randomizes the inputs based on the specified input value ranges
         private void randomizeInputs(
             ValueRange[] valueRanges,
             double[] inputs,
@@ -115,6 +115,7 @@ namespace SamplesGeneratorLib
             }
         }
 
+        // Copies the input and output arrays to the record array
         private void copyInputsAndOutputs(
             double[] record,
             double[] inputs,

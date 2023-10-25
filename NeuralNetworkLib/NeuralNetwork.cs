@@ -5,148 +5,118 @@
  * All Rights Reserved
 */
 
-//#define PRINTMSGS
-
-using NeuralNetworkLib.ActivationFunctions;
 using UtilitiesLib;
 
 namespace NeuralNetworkLib
 {
-    public interface INeuralNetworkFuncs
-    {
-        void Configure(int nbrInputs, int nbrOutputs);
-        void ComputeErrors(double[] targets, double[] outputs, double[] errors);
-        void ProcessTestResult(int index, double[] inputs, double[] targets, double[] outputs);
-        void SummarizeTestResults();
-    }
-
-    public class NeuronLayerConfig
-    {
-        public int NbrOutputs { get; }
-        public IActivationFunction ActivationFunction { get; }
-        public double InitialWeightRange { get; }
-
-        public NeuronLayerConfig(
-            int nbrOutputs,
-            IActivationFunction activationFunction,
-            double initialWeightRange)
-        {
-            NbrOutputs = nbrOutputs;
-            ActivationFunction = activationFunction;
-            InitialWeightRange = initialWeightRange;
-        }
-    }
-
+    // Represents a Neural Network and its structure
     public class NeuralNetwork
     {
+        // The Neuron Layers
         public NeuronLayer[] Layers { get; }
 
+        // The number of outputs from the neural network
         private readonly int nbrOutputs;
+
+        // The random number generator to be used for all the layers' weights and biases initialization
         private readonly Random rnd;
-        private readonly INeuralNetworkFuncs neuralNetworkFuncs;
+
+        // The user-defined functions used during training and testing
+        private readonly IUserDefinedFunctions userDefinedFunctions;
+
+        // Used to store the errors for each training and testing sample after feed-forward processing of the sample inputs into outputs based on the sample's targets
         private readonly double[] errors;
 
+        // Constructor for the NeuralNetwork class
         public NeuralNetwork(
             int nbrInputs,
             NeuronLayerConfig[] layerConfigs,
             Random rnd,
-            INeuralNetworkFuncs neuralNetworkFuncs)
+            IUserDefinedFunctions userDefinedFunctions)
         {
             this.rnd = rnd;
-            this.neuralNetworkFuncs = neuralNetworkFuncs;
+            this.userDefinedFunctions = userDefinedFunctions;
 
+            // The number of layers L
             int nbrLayers = layerConfigs.Count();
 
             Layers = new NeuronLayer[nbrLayers];
 
+            // Create the Neuron Layers based on their configuration
             for (int l = 0; l < nbrLayers; l++)
             {
                 var layerConfig = layerConfigs[l];
 
-                Layers[l] = new NeuronLayer(l, nbrInputs, layerConfig.NbrOutputs, layerConfig.ActivationFunction, rnd, layerConfig.InitialWeightRange);
+                // Create the Neuron Layer based on its configuration
+                Layers[l] = new NeuronLayer(nbrInputs, layerConfig.NbrOutputs, layerConfig.ActivationFunction, rnd, layerConfig.InitialWeightRange);
 
                 // The number of inputs to the next layer is equal to the number of outputs from this layer
                 nbrInputs = layerConfig.NbrOutputs;
             }
 
+            // The number of outputs from the neural network equals the number of outputs (neurons) in the last (L - 1) layer
             nbrOutputs = nbrInputs;
 
             errors = new double[nbrOutputs];
         }
 
+        // Performs the training of the neural network for the given training samples
         public void Train(
             double[][] trainingInputs,
-            double[][] trainingOutputs,
+            double[][] trainingTargets,
             int nbrEpochs,
             double trainingRate,
             double trainingMomentum)
         {
             int nbrTrainingSamples = trainingInputs.Length;
 
-#if PRINTMSGS
-            Console.WriteLine($"Training: {nbrTrainingSamples} samples and {nbrEpochs} epochs");
-#endif
-
+            // The training is divided into a number of Epochs
             for (int e = 0; e < nbrEpochs; e++)
             {
+                // Generate the random sequence in which the training samples are presented to the neural network in this epoch
                 int[] sequence = Utilities.GenerateSequence(nbrTrainingSamples, rnd);
 
-#if PRINTMSGS
-                Console.WriteLine($"Training Epoch {e}");
-#endif
-
+                // Perform the neural network training for this epoch over all training samples
                 for (int i = 0; i < nbrTrainingSamples; i++)
                 {
                     int ii = sequence[i];
 
                     double[] inputs = trainingInputs[ii];
-                    double[] targets = trainingOutputs[ii];
+                    double[] targets = trainingTargets[ii];
 
+                    // Compute the outputs for the training inputs
                     double[] outputs = ComputeOutputs(inputs);
 
-                    neuralNetworkFuncs.ComputeErrors(targets, outputs, errors);
+                    // Call the user-defined function to compute the error (difference) between the training sample's targets and neural network outputs
+                    userDefinedFunctions.ComputeErrors(targets, outputs, errors);
 
-#if PRINTMSGS
-                    Console.WriteLine($"{i} -> {ii}");
-                    Utilities.PrintValues(inputs, addEOL: true);
-                    Utilities.PrintValues(targets, addEOL: true);
-                    Utilities.PrintValues(outputs, addEOL: true);
-                    Utilities.PrintValues(errors, addEOL: true);
-#endif
-
+                    // Update all the neuron layers' weights and biases based on the specified training rate and momentum
                     Update(errors, trainingRate, trainingMomentum);
                 }
             }
         }
 
+        // Performs the testing of the neural network for the given testing samples
         public void Test(
             double[][] testingInputs,
-            double[][] testingOutputs)
+            double[][] testingTargets)
         {
             int nbrTestingSamples = testingInputs.Length;
-
-#if PRINTMSGS
-            Console.WriteLine($"Testing: {nbrTestingSamples}");
-#endif
 
             for (int i = 0; i < nbrTestingSamples; i++)
             {
                 double[] inputs = testingInputs[i];
-                double[] targets = testingOutputs[i];
+                double[] targets = testingTargets[i];
 
+                // Compute the outputs for the testing inputs
                 double[] outputs = ComputeOutputs(inputs);
 
-#if PRINTMSGS
-                Console.WriteLine($"{i}:");
-                Utilities.PrintValues(inputs, addEOL: true);
-                Utilities.PrintValues(targets, addEOL: true);
-                Utilities.PrintValues(outputs, addEOL: true);
-#endif
-
-                neuralNetworkFuncs.ProcessTestResult(i, inputs, targets, outputs);
+                // Call the user-defined function to process the test result
+                userDefinedFunctions.ProcessTestResult(i, inputs, targets, outputs);
             }
         }
 
+        // Computes the outputs for the given inputs
         private double[] ComputeOutputs(
             double[] inoutputs)
         {
@@ -155,15 +125,18 @@ namespace NeuralNetworkLib
                 // The outputs of one layer become the inputs to the next layer
                 inoutputs = layer.ComputeOutputs(inoutputs);
             }
+
             // The outputs from the last layer are the outputs of the neural network
             return inoutputs;
         }
 
+        // Updates all the layers' weights and biases
         private void Update(
             double[] errors,
             double trainingRate,
             double trainingMomentum)
         {
+            // Start from the last layer back to the first layer
             for (int l = Layers.Count() - 1; l >= 0; l--)
             {
                 var layer = Layers[l];
@@ -171,6 +144,7 @@ namespace NeuralNetworkLib
                 // Errors for this layer are computed and then fed back to the previous layer
                 errors = layer.ComputeErrors(errors);
 
+                // Update the layer's weights and biases
                 layer.Update(trainingRate, trainingMomentum);
             }
         }
