@@ -21,7 +21,7 @@ namespace TestFuncsLib
         }
     }
 
-    // An implementation of the INeuralNetworkFuncs interface that is used for Classification Prediction Problems using Class Binary Vectors
+    // An implementation of the IUserDefinedFunctions interface that is used for Classification Prediction Problems using Class Binary Vectors
     // The neural network will produce outputs, and the index with the maximum output value corresponds to the class
     public class IndexOfMaxMatches : IUserDefinedFunctions
     {
@@ -106,7 +106,7 @@ namespace TestFuncsLib
         }
     }
 
-    // An implementation of the INeuralNetworkFuncs interface that is used for Regression Prediction Problems using Absolute of Errors Distance Metric
+    // An implementation of the IUserDefinedFunctions interface that is used for Regression Prediction Problems using Absolute of Errors Distance Metric
     public class AbsErrors : IUserDefinedFunctions
     {
         private int nbrTests;

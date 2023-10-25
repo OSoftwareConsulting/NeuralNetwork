@@ -107,8 +107,8 @@ namespace TestSetupLib
 
             // Neural Network
 
-            // Specifies the class implementing the INeuralNetworkFuncs interface
-            public string NeuralNetworkFuncs { get; set; }
+            // Specifies the class implementing the IUserDefinedFunctions interface
+            public string UserDefinedFunctions { get; set; }
 
             // Neuron Layer Configurations (must specify at least one)
             public NeuronLayerConfig[] LayerConfigs { get; set; }
@@ -193,7 +193,7 @@ namespace TestSetupLib
                 throw new InvalidOperationException("Must specify a Samples Generator");
             }
 
-            IUserDefinedFunctions neuralNetworkFuncs = (IUserDefinedFunctions)GetInstance(testSetup.NeuralNetworkFuncs);
+            IUserDefinedFunctions userDefinedFunctions = (IUserDefinedFunctions)GetInstance(testSetup.UserDefinedFunctions);
 
             return new TestSetupLib.TestSetup(
                 rnd,
@@ -203,7 +203,7 @@ namespace TestSetupLib
                 testSetup.NbrEpochs,
                 testSetup.TrainingRate,
                 testSetup.TrainingMomentum,
-                neuralNetworkFuncs);
+                userDefinedFunctions);
         }
 
         private static object GetInstance(string strFullyQualifiedName)

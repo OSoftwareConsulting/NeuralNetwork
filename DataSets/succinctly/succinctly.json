@@ -27,5 +27,5 @@
     "RandomizeSamples": false
   },
   "TrainingFraction": 0.8,
-  "NeuralNetworkFuncs": "TestFuncsLib.IndexOfMaxMatches"
+  "UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches"
 }
