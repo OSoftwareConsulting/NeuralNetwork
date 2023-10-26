@@ -12,30 +12,19 @@ using UtilitiesLib;
 // This assembly is loaded at runtime and specified in the test setup JSON files
 namespace TestFuncsLib
 {
-    // Example Samples Generator Function that computes Math.Sin
-    public class MathSin : ISamplesGeneratorFunction
-    {
-        public void Compute(double[] x, double[] y)
-        {
-            y[0] = Math.Sin(x[0]);
-        }
-    }
-
     // An implementation of the IUserDefinedFunctions interface that is used for Classification Prediction Problems using Class Binary Vectors
     // The neural network will produce outputs, and the index with the maximum output value corresponds to the class
     public class IndexOfMaxMatches : IUserDefinedFunctions
     {
-        private int nbrTests;
-        private int nbrInputs;
         private int nbrOutputs;
+        private int nbrTests;
         private int nbrPassed;
         private double avgPassed;
 
         public IndexOfMaxMatches()
         {
-            nbrTests = 0;
-            nbrInputs = 0;
             nbrOutputs = 0;
+            nbrTests = 0;
             nbrPassed = 0;
             avgPassed = 0.0;
         }
@@ -43,7 +32,6 @@ namespace TestFuncsLib
         // Initialize data structures
         public void Configure(int nbrInputs, int nbrOutputs)
         {
-            this.nbrInputs = nbrInputs;
             this.nbrOutputs = nbrOutputs;
         }
 
@@ -106,27 +94,33 @@ namespace TestFuncsLib
         }
     }
 
+    // Example class that implements the ISamplesGeneratorFunction interface that computes Math.Sin
+    public class MathSin : ISamplesGeneratorFunction
+    {
+        public void Compute(double[] x, double[] y)
+        {
+            y[0] = Math.Sin(x[0]);
+        }
+    }
+
     // An implementation of the IUserDefinedFunctions interface that is used for Regression Prediction Problems using Absolute of Errors Distance Metric
     public class AbsErrors : IUserDefinedFunctions
     {
-        private int nbrTests;
-        private int nbrInputs;
         private int nbrOutputs;
+        private int nbrTests;
         private double[] absErrors;
         private double[] sumAbsErrors;
         private double[] avgAbsErrors;
 
         public AbsErrors()
         {
-            nbrTests = 0;
-            nbrInputs = 0;
             nbrOutputs = 0;
+            nbrTests = 0;
         }
 
         // Initialize data structures
         public void Configure(int nbrInputs, int nbrOutputs)
         {
-            this.nbrInputs = nbrInputs;
             this.nbrOutputs = nbrOutputs;
 
             absErrors = new double[nbrOutputs];
