@@ -15,9 +15,6 @@ namespace NeuralNetworkLib
         // The Neuron Layers
         public NeuronLayer[] Layers { get; }
 
-        // The number of outputs from the neural network
-        private readonly int nbrOutputs;
-
         // The random number generator to be used for all the layers' weights and biases initialization
         private readonly Random rnd;
 
@@ -55,7 +52,7 @@ namespace NeuralNetworkLib
             }
 
             // The number of outputs from the neural network equals the number of outputs (neurons) in the last (L - 1) layer
-            nbrOutputs = nbrInputs;
+            int nbrOutputs = nbrInputs;
 
             errors = new double[nbrOutputs];
         }
