@@ -2,7 +2,7 @@
   "profiles": {
     "NeuralNetwork": {
       "commandName": "Project",
-      "commandLineArgs": "../../../../DataSets/succinctly/succinctly.json"
+      "commandLineArgs": "../../../../Exercise/wdbc.json"
     }
   }
 }
