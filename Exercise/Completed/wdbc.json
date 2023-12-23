@@ -24,7 +24,8 @@
     "SkipRows": 0,
     "SkipColumns": 0,
     "NbrOutputs": 2,
-    "RandomizeSamples": true
+    "RandomizeSamples": true,
+    "NormalizeInputs": true
   },
   "TrainingFraction": 0.8,
   "UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches"

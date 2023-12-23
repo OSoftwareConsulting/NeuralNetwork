@@ -22,6 +22,7 @@ namespace SamplesGeneratorLib
         public static Samples GetSamples(
             int nbrOutputs,
             double trainingFraction,
+            bool normalizeInputs,
             string filePath,
             char separator,
             int skipRows,
@@ -41,6 +42,7 @@ namespace SamplesGeneratorLib
             // Otherwise the order of the samples is randomized 
             return dfr.GetSamples(
                 trainingFraction,
+                normalizeInputs,
                 rnd);
         }
 

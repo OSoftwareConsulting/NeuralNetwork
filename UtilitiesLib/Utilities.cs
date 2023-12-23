@@ -98,5 +98,35 @@ namespace UtilitiesLib
             var rndVal = rnd.NextDouble();      //  0 .. 1
             return minValue + (rndVal * range); // minValue .. maxValue
         }
+
+        // Computes the input value's Order Of Magnitude
+        // 10 >= x < 0
+        // ex: value = 1.095 returns 0
+        // ex: value = 17.99 returns 1
+        // ex: value = 122.8 returns 2
+        // ex: value = 0.006399 returns -3
+        public static int OrderOfMagnitude(double value)
+        {
+            int orderOfMagnitude = 0;
+
+            if (value >= 10d)
+            {
+                do
+                {
+                    orderOfMagnitude++;
+                    value /= 10d;
+                } while (value >= 10d);
+            }
+            else if (value < 1d)
+            {
+                do
+                {
+                    orderOfMagnitude--;
+                    value *= 10d;
+                } while (value < 1d);
+            }
+
+            return orderOfMagnitude;
+        }
     }
 }

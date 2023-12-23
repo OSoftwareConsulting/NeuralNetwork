@@ -56,6 +56,7 @@ namespace SamplesGeneratorLib
         public static Samples GetSamples(
             int nbrOutputs,
             double trainingFraction,
+            bool normalizeInputs,
             ISamplesGeneratorFunction dataGeneratorFunction,
             int nbrRecords,
             ValueRange[] valueRanges,   // ranges for inputs, defines the number of inputs
@@ -75,6 +76,7 @@ namespace SamplesGeneratorLib
             // The samples do not have to be randomized since the inputs are generated randomly
             return fdg.GetSamples(
                 trainingFraction,
+                normalizeInputs,
                 rnd: null);
         }
 

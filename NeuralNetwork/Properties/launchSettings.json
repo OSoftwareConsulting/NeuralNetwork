@@ -2,7 +2,7 @@
   "profiles": {
     "NeuralNetwork": {
       "commandName": "Project",
-      "commandLineArgs": "../../../../Exercise/wdbc.json"
+      "commandLineArgs": "../../../../Exercise/Completed/wdbc.json"
     }
   }
 }

@@ -32,6 +32,9 @@ namespace TestSetupLib
 
             // If true, the samples read in from the file are randomized in the training and testing sets, otherwise they are taken in the order in the file
             public bool RandomizeSamples { get; set; }
+
+            // Perform the input normalization
+            public bool? NormalizeInputs { get; set; }
         }
 
         public struct ValueRange
@@ -54,6 +57,9 @@ namespace TestSetupLib
 
             // An array of min and max input values used to generate inputs to the Samples Generator Function
             public ValueRange[] ValueRanges { get; set; }
+
+            // Perform the input normalization
+            public bool? NormalizeInputs { get; set; }
         }
 
         // Specifies for the configuration a Neuron Layer
@@ -160,6 +166,7 @@ namespace TestSetupLib
                 samples = SamplesGeneratorLib.FileSamplesGenerator.GetSamples(
                     nbrOutputs,
                     testSetup.TrainingFraction,
+                    testSetup.FileSamplesGenerator.NormalizeInputs ?? false,
                     dataFilePath,
                     testSetup.FileSamplesGenerator.Separator,
                     testSetup.FileSamplesGenerator.SkipRows,
@@ -182,6 +189,7 @@ namespace TestSetupLib
                 samples = SamplesGeneratorLib.FunctionSamplesGenerator.GetSamples(
                     nbrOutputs,
                     testSetup.TrainingFraction,
+                    testSetup.FunctionSamplesGenerator.NormalizeInputs ?? false,
                     dataGeneratorFunction,
                     testSetup.FunctionSamplesGenerator.NbrRecords,
                     valueRanges.ToArray(),

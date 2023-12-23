@@ -25,6 +25,7 @@ namespace SamplesGeneratorLib
         // If a random number generator is specified, the order of the records is randomized before separating the records into the training and testing sample sets
         internal Samples(
             double trainingFraction,
+            bool normalizeInputs,
             double[][] records,
             int nbrValuesPerRecord,
             int nbrOutputs,
@@ -48,6 +49,12 @@ namespace SamplesGeneratorLib
             TrainingTargets = new double[nbrTrainingSamples][];
             TestingInputs = new double[nbrTestingSamples][];
             TestingTargets = new double[nbrTestingSamples][];
+
+            // Normalize the records' inputs
+            if (normalizeInputs)
+            {
+                NormalizeInputs(records, nbrInputs);
+            }
 
             // Generate the sequence by which the records are added to the training and testing sample sets
             // If a random number generator is passed in, the samples are added in random order
@@ -100,6 +107,31 @@ namespace SamplesGeneratorLib
                 for (int j = 0; j < nbrOutputs; j++, m++)
                 {
                     TestingTargets[i][j] = records[nn][m];
+                }
+            }
+        }
+
+        // Normalize the records' input values by the first record's inputs' order of magnitudes
+        private void NormalizeInputs(
+            double[][] records,
+            int nbrInputs)
+        {
+            double[] inputFactors = new double[nbrInputs];
+            double[] inputs = records[0];
+
+            for (int j = 0; j < nbrInputs; j++)
+            {
+                inputFactors[j] = 1d / Math.Pow(10d, Utilities.OrderOfMagnitude(inputs[j]));
+            }
+
+            int nbrRecords = records.Count();
+            for (int n = 0; n < nbrRecords; n++)
+            {
+                inputs = records[n];
+
+                for (int j = 0; j < nbrInputs; j++)
+                {
+                    inputs[j] *= inputFactors[j];
                 }
             }
         }

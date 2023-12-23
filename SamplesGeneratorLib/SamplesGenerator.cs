@@ -30,10 +30,12 @@ namespace SamplesGeneratorLib
 
         protected Samples GetSamples(
             double trainingFraction,
+            bool normalizeInputs,
             Random rnd = null)
         {
             return new Samples(
                 trainingFraction,
+                normalizeInputs,
                 records,
                 nbrValuesPerRecord,
                 nbrOutputs,
