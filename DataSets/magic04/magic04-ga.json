@@ -1,0 +1,33 @@
+{
+  "Debug": false,
+  "AssemblyPaths": [
+    "..\\..\\..\\..\\TestFuncsLib\\bin\\Debug\\net9.0\\TestFuncsLib.dll"
+  ],
+  "NbrEpochs": 1000,
+  "TrainingRate": [ 0.005, 0.01, 0.025, 0.05 ],
+  "TrainingMomentum": [ 0.005, 0.01, 0.025 ],
+  "NbrInputs": 10,
+  "NbrOutputs": 2,
+  "NbrLayers": [ 2, 4 ],
+  "LayerConfig": {
+    "NbrOutputs": [ 4, 16 ],
+    "ActivationFunction": [ "NeuralNetworkLib.ActivationFunctions.TanhActivationFunction", "NeuralNetworkLib.ActivationFunctions.SigmoidActivationFunction" ],
+    "InitialWeightRange": [ 0.01, 0.1 ]
+  },
+  "OutputLayerActivationFunction": "NeuralNetworkLib.ActivationFunctions.SoftMaxActivationFunction",
+  "FileSamplesGenerator": {
+    "FilePath": "./magic04.csv",
+    "Separator": ",",
+    "SkipRows": 0,
+    "SkipColumns": 0,
+    "RandomizeSamples": true,
+    "NormalizeInputs": true
+  },
+  "TrainingFraction": 0.8,
+  "UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches",
+  "PopulationSize": 10,
+  "SelectionPercentage": 0.2,
+  "MatingPercentage": 0.5,
+  "MutationProbability": 0.1,
+  "FitnessLowerBetter": false
+}

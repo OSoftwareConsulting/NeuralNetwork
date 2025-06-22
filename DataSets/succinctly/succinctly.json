@@ -1,6 +1,7 @@
 {
+  "Debug": true,
   "AssemblyPaths": [
-    "..\\..\\..\\..\\TestFuncsLib\\bin\\Debug\\net7.0\\TestFuncsLib.dll"
+    "..\\..\\..\\..\\TestFuncsLib\\bin\\Debug\\net9.0\\TestFuncsLib.dll"
   ],
   "NbrEpochs": 1000,
   "TrainingRate": 0.05,
@@ -23,7 +24,6 @@
     "Separator": ",",
     "SkipRows": 0,
     "SkipColumns": 0,
-    "NbrOutputs": 3,
     "RandomizeSamples": false
   },
   "TrainingFraction": 0.8,

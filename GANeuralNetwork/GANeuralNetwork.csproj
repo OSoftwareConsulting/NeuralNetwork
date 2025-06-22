@@ -1,19 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    <StartupObject>NeuralNetworkExec.NeuralNetworkMain</StartupObject>
+    <StartupObject>NeuralNetworkExec.GeneticAlgorighmMain</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NeuralNetworkRunner\NeuralNetworkRunner.csproj" />
-    <ProjectReference Include="..\SamplesGeneratorLib\SamplesGeneratorLib.csproj" />
+    <ProjectReference Include="..\..\GeneticAlgorithm\GeneticAlgorithmLib\GeneticAlgorithmLib.csproj" />
     <ProjectReference Include="..\NeuralNetworkLib\NeuralNetworkLib.csproj" />
+    <ProjectReference Include="..\NeuralNetworkRunner\NeuralNetworkRunner.csproj" />
     <ProjectReference Include="..\SetupLib\SetupLib.csproj" />
-    <ProjectReference Include="..\UtilitiesLib\UtilitiesLib.csproj" />
   </ItemGroup>
 
 </Project>

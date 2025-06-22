@@ -4,23 +4,23 @@
     "..\\..\\..\\..\\TestFuncsLib\\bin\\Debug\\net9.0\\TestFuncsLib.dll"
   ],
   "NbrEpochs": 1000,
-  "TrainingRate": 0.05,
-  "TrainingMomentum": 0.01,
-  "NbrInputs": 30,
+  "TrainingRate": 0.025,
+  "TrainingMomentum": 0.005,
+  "NbrInputs": 10,
   "LayerConfigs": [
     {
-      "NbrOutputs": 10,
+      "NbrOutputs": 11,
       "ActivationFunction": "NeuralNetworkLib.ActivationFunctions.TanhActivationFunction",
-      "InitialWeightRange": 0.01
+      "InitialWeightRange": 0.075
     },
     {
       "NbrOutputs": 2,
       "ActivationFunction": "NeuralNetworkLib.ActivationFunctions.SoftMaxActivationFunction",
-      "InitialWeightRange": 0.01
+      "InitialWeightRange": 0.075
     }
   ],
   "FileSamplesGenerator": {
-    "FilePath": "./wdbc.csv",
+    "FilePath": "./magic04.csv",
     "Separator": ",",
     "SkipRows": 0,
     "SkipColumns": 0,
