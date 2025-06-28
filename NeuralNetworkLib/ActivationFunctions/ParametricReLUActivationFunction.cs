@@ -9,6 +9,8 @@ namespace NeuralNetworkLib.ActivationFunctions;
 
 public class ParametricReLUActivationFunction : IActivationFunction
 {
+    public string TypeName { get; set; }
+
     private readonly double parameter;
 
     public ParametricReLUActivationFunction(double parameter)

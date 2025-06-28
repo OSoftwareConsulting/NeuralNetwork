@@ -9,6 +9,8 @@ namespace NeuralNetworkLib.ActivationFunctions;
 
 public class SigmoidActivationFunction : IActivationFunction
 {
+    public string TypeName { get; set; }
+
     public double Compute(double x)
     {
         return 1.0 / (1.0 + Math.Exp(-x));

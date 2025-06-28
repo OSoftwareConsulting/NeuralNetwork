@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -9,7 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NeuralNetworkRunner\NeuralNetworkRunner.csproj" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta5.25306.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\GeneticAlgorithm\GeneticAlgorithmLib\GeneticAlgorithmLib.csproj" />
     <ProjectReference Include="..\SamplesGeneratorLib\SamplesGeneratorLib.csproj" />
     <ProjectReference Include="..\NeuralNetworkLib\NeuralNetworkLib.csproj" />
     <ProjectReference Include="..\SetupLib\SetupLib.csproj" />

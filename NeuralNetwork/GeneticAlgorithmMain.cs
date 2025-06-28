@@ -108,6 +108,8 @@ public class Setting<T> : Gene
 
 public class NeuralNetworkInstance : GAIndividual
 {
+    public NeuralNetwork NeuralNetwork { get; private set; }
+
     public NeuralNetworkInstance(bool construct) : base()
     {
         if (!construct)
@@ -140,46 +142,70 @@ public class NeuralNetworkInstance : GAIndividual
         for (int i = 0; i < settings.NbrLayers; i++)
         {
             var layerConfig = new NeuronLayerConfig(
-                nbrOutputs: (i == L) ? gaSetup.NbrOutputs : settings.NbrOutputs,
+                nbrOutputs: (i == L) ? gaSetup.Samples.NbrOutputs : settings.NbrOutputs,
                 activationFunction: (i == L) ? gaSetup.OutputLayerActivationFunction : settings.ActivationFunction,
                 initialWeightRange: settings.InitialWeightRange);
 
             layerConfigs.Add(layerConfig);
         }
 
-        var nnSetup = new NeuralNetworkSetup(
+        var nnSetup = new NeuralNetworkTrainAndTestSetup(
             rnd: gaSetup.Rnd,
             debug: gaSetup.Debug,
-            nbrInputs: gaSetup.NbrInputs,
             samples: gaSetup.Samples,
             layerConfigs: layerConfigs.ToArray(),
+            memoryFilePath: gaSetup.MemoryFilePath,
             nbrEpochs: gaSetup.NbrEpochs,
             trainingRate: settings.TrainingRate,
             trainingMomentum: settings.TrainingMomentum,
             userDefinedFunctions: gaSetup.UserDefinedFunctions);
 
-        Console.WriteLine($"Running: {ToString()}\n");
+        Console.WriteLine($"Computing Fitness: {Id}\n\n{ToString()}");
 
-        Fitness = NeuralNetworkRunner.RunNeuralNetwork(nnSetup);
+        NeuralNetwork = new NeuralNetwork(
+            nnSetup.Samples.NbrInputs,
+            nnSetup.LayerConfigs,
+            nnSetup.UserDefinedFunctions,
+            nnSetup.Rnd);
 
-        Console.WriteLine($"\tFitness: {Fitness:F4}\n");
+        NeuralNetwork.Train(
+            nnSetup.Samples.TrainingInputs,
+            nnSetup.Samples.TrainingTargets,
+            nnSetup.NbrEpochs,
+            nnSetup.TrainingRate,
+            nnSetup.TrainingMomentum,
+            nnSetup.Debug);
+
+        NeuralNetwork.Test(
+            nnSetup.Samples.TestingInputs,
+            nnSetup.Samples.TestingTargets,
+            nnSetup.Debug);
+
+        nnSetup.UserDefinedFunctions.SummarizeTestResults(nnSetup.Debug);
+
+        Fitness = nnSetup.UserDefinedFunctions.ComputeScore();
+
+        Console.WriteLine($"\n\tFitness: {Fitness:F4}\n");
 
         FitnessComputed = true;
     }
 
     public override string ToString()
     {
-        StringBuilder sb = new StringBuilder();
         var settings = GetNeuralNetworkSettings();
 
-        sb.Append($"{Id.ToString()}\n");
+        StringBuilder sb = new StringBuilder();
+
         sb.Append($"\t{SettingIndexes.TRAINING_RATE.ToString()}: {settings.TrainingRate:F4}\n");
         sb.Append($"\t{SettingIndexes.TRAINING_MOMENTUM.ToString()}: {settings.TrainingMomentum:F4}\n");
         sb.Append($"\t{SettingIndexes.NBR_LAYERS.ToString()}: {settings.NbrLayers}\n");
         sb.Append($"\t{SettingIndexes.NBR_OUTPUTS.ToString()}: {settings.NbrOutputs}\n");
         sb.Append($"\t{SettingIndexes.ACTIVATION_FUNCTION.ToString()}: {settings.ActivationFunction}\n");
-        sb.Append($"\t{SettingIndexes.INITIAL_WEIGHT_RANGE.ToString()}: {settings.InitialWeightRange:F4}\n");
-        sb.Append($"\tFitness: {Fitness:F4}");
+        sb.Append($"\t{SettingIndexes.INITIAL_WEIGHT_RANGE.ToString()}: {settings.InitialWeightRange:F4}");
+        if (FitnessComputed)
+        {
+            sb.Append($"\n\tFitness: {Fitness:F4}");
+        }
 
         return sb.ToString();
     }
@@ -230,6 +256,8 @@ public class NeuralNetworkInstance : GAIndividual
 
 public class NeuralNetworkGeneticAlgorithm : GeneticAlgorithm
 {
+    private readonly GeneticAlgorithmSetup setup;
+
     public NeuralNetworkGeneticAlgorithm(GeneticAlgorithmSetup setup) : base(
         random: setup.Rnd,
         populationSize: setup.PopulationSize,
@@ -238,6 +266,7 @@ public class NeuralNetworkGeneticAlgorithm : GeneticAlgorithm
         mutationProbability: setup.MutationProbability,
         fitnessLowerBetter: setup.FitnessLowerBetter)
     {
+        this.setup = setup;
     }
 
     protected override GAIndividual CreateIndividual(bool construct) => new NeuralNetworkInstance(construct);
@@ -249,6 +278,12 @@ public class NeuralNetworkGeneticAlgorithm : GeneticAlgorithm
         {
             Console.WriteLine($"{individual.ToString()}\n");
         }
+
+        var optimalNeuralNetwork = FittestIndividual() as NeuralNetworkInstance;
+        if (optimalNeuralNetwork.NeuralNetwork != null && setup.MemoryFilePath != null)
+        {
+            optimalNeuralNetwork.NeuralNetwork.Save(setup.MemoryFilePath);
+        }
     }
 
     protected override bool SearchCompleted()
@@ -257,31 +292,16 @@ public class NeuralNetworkGeneticAlgorithm : GeneticAlgorithm
     }
 }
 
-public class GeneticAlgorighmMain
+public static class GeneticAlgorithmMain
 {
-    public static void Main(string[] args)
+    public static void Main(string filePath)
     {
-        try
-        {
-            if (args.Length < 1)
-            {
-                throw new ArgumentException("Usage: GANeuralNetwork <path to the JSON setup file>");
-            }
+        var setup = SetupReader.GetGeneticAlgorithmSetup(filePath);
 
-            var setup = SetupReader.GetGeneticAlgorithmSetup(args[0]);
+        NeuralNetworkSettingGenerator.Setup = setup;
 
-            NeuralNetworkSettingGenerator.Setup = setup;
+        var ga = new NeuralNetworkGeneticAlgorithm(setup);
 
-            var ga = new NeuralNetworkGeneticAlgorithm(setup);
-
-            ga.Search();
-
-            Console.WriteLine("\nPress any key to exit...");
-            Console.ReadKey();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
+        ga.Search();
     }
 }

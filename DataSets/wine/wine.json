@@ -6,7 +6,6 @@
   "NbrEpochs": 1000,
   "TrainingRate": 0.05,
   "TrainingMomentum": 0.01,
-  "NbrInputs": 13,
   "LayerConfigs": [
     {
       "NbrOutputs": 6,
@@ -20,7 +19,7 @@
     }
   ],
   "FileSamplesGenerator": {
-    "FilePath": "./wine.csv",
+    "FilePath": "wine.csv",
     "Separator": ",",
     "SkipRows": 0,
     "SkipColumns": 0,
@@ -28,5 +27,6 @@
     "NormalizeInputs": true
   },
   "TrainingFraction": 0.8,
+  "MemoryFilePath": "wine.nnm",
   "UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches"
 }

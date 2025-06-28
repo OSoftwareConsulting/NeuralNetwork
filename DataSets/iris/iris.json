@@ -6,7 +6,6 @@
   "NbrEpochs": 1000,
   "TrainingRate": 0.05,
   "TrainingMomentum": 0.01,
-  "NbrInputs": 4,
   "LayerConfigs": [
     {
       "NbrOutputs": 6,
@@ -20,7 +19,7 @@
     }
   ],
   "FileSamplesGenerator": {
-    "FilePath": "./iris.csv",
+    "FilePath": "iris.csv",
     "Separator": ",",
     "SkipRows": 0,
     "SkipColumns": 0,
@@ -28,5 +27,6 @@
     "NormalizeInputs": true
   },
   "TrainingFraction": 0.8,
+  "MemoryFilePath": "iris.nnm",
   "UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches"
 }

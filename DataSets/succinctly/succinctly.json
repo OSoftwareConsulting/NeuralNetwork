@@ -6,7 +6,6 @@
   "NbrEpochs": 1000,
   "TrainingRate": 0.05,
   "TrainingMomentum": 0.01,
-  "NbrInputs": 4,
   "LayerConfigs": [
     {
       "NbrOutputs": 5,
@@ -20,12 +19,13 @@
     }
   ],
   "FileSamplesGenerator": {
-    "FilePath": "./succinctly.csv",
+    "FilePath": "succinctly.csv",
     "Separator": ",",
     "SkipRows": 0,
     "SkipColumns": 0,
     "RandomizeSamples": false
   },
   "TrainingFraction": 0.8,
+  "MemoryFilePath": "succinctly.nnm",
   "UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches"
 }

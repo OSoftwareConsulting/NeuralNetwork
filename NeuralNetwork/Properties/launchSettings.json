@@ -2,7 +2,7 @@
   "profiles": {
     "NeuralNetwork": {
       "commandName": "Project",
-      "commandLineArgs": "../../../../Datasets/wine/wine.json"
+      "commandLineArgs": "--mode test --file C:\\ov\\NeuralNetwork\\DataSets\\magic04\\magic04-t.json"
     }
   }
 }

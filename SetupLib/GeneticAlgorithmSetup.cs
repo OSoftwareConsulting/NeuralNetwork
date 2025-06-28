@@ -45,12 +45,6 @@ public class GeneticAlgorithmSetup
 
     // Data Set
 
-    // Number of Neural Network Inputs
-    public int NbrInputs { get; }
-
-    // The number of outputs from the Last Layer (Neural Network)
-    public int NbrOutputs { get; set; }
-
     // The Training and Testing Samples
     public Samples Samples { get; }
 
@@ -64,6 +58,9 @@ public class GeneticAlgorithmSetup
 
     // The Activation Function to use for the Output Layer
     public IActivationFunction OutputLayerActivationFunction { get; }
+
+    // The File Path for the Neural Network's Memory
+    public string MemoryFilePath { get; }
 
     // Training
 
@@ -102,12 +99,11 @@ public class GeneticAlgorithmSetup
     public GeneticAlgorithmSetup(
         Random rnd,
         bool debug,
-        int nbrInputs,
-        int nbrOutputs,
         Samples samples,
         int[] nbrLayers,
         GANeuronLayerConfig layerConfig,
         IActivationFunction outputLayerActivationFunction,
+        string memoryFilePath,
         int nbrEpochs,
         double[] trainingRate,
         double[] trainingMomentum,
@@ -120,12 +116,11 @@ public class GeneticAlgorithmSetup
     {
         Rnd = rnd;
         Debug = debug;
-        NbrInputs = nbrInputs;
-        NbrOutputs = nbrOutputs;
         Samples = samples;
         NbrLayers = nbrLayers;
         LayerConfig = layerConfig;
         OutputLayerActivationFunction = outputLayerActivationFunction;
+        MemoryFilePath = memoryFilePath;
         NbrEpochs = nbrEpochs;
         TrainingRate = trainingRate;
         TrainingMomentum = trainingMomentum;
@@ -135,8 +130,5 @@ public class GeneticAlgorithmSetup
         MatingPercentage = matingPercentage;
         MutationProbability = mutationProbability;
         FitnessLowerBetter = fitnessLowerBetter;
-
-        // Initialize the User Defined Functions' data structures
-        //UserDefinedFunctions.Configure(NbrInputs, NbrOutputs);
     }
 }

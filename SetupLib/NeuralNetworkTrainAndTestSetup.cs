@@ -10,7 +10,7 @@ using SamplesGeneratorLib;
 
 namespace SetupLib;
 
-public class NeuralNetworkSetup
+public class NeuralNetworkTrainAndTestSetup
 {
     // General
 
@@ -22,12 +22,6 @@ public class NeuralNetworkSetup
 
     // Data Set
 
-    // Number of Neural Network Inputs
-    public int NbrInputs { get; }
-
-    // Number of Neural Network Outputs
-    public int NbrOutputs { get; }
-
     // The Training and Testing Samples
     public Samples Samples { get; }
 
@@ -35,6 +29,9 @@ public class NeuralNetworkSetup
 
     // The neural network's layers' configurations
     public NeuronLayerConfig[] LayerConfigs { get; }
+
+    // The File Path for the Neural Network's Memory
+    public string MemoryFilePath { get; }
 
     // Training
 
@@ -52,12 +49,12 @@ public class NeuralNetworkSetup
     // The user-defined functions used during neural network training and testing (see IUserDefinedFunctions)
     public IUserDefinedFunctions UserDefinedFunctions { get; }
 
-    public NeuralNetworkSetup(
+    public NeuralNetworkTrainAndTestSetup(
         Random rnd,
         bool debug,
-        int nbrInputs,
         Samples samples,
         NeuronLayerConfig[] layerConfigs,
+        string memoryFilePath,
         int nbrEpochs,
         double trainingRate,
         double trainingMomentum,
@@ -65,16 +62,15 @@ public class NeuralNetworkSetup
     {
         Rnd = rnd;
         Debug = debug;
-        NbrInputs = nbrInputs;
-        NbrOutputs = layerConfigs[layerConfigs.Count() - 1].NbrOutputs; // The number of outputs from the neural network is equal to the number of outputs from the last layer (L - 1)
         Samples = samples;
         LayerConfigs = layerConfigs;
+        MemoryFilePath = memoryFilePath;
         NbrEpochs = nbrEpochs;
         TrainingRate = trainingRate;
         TrainingMomentum = trainingMomentum;
         UserDefinedFunctions = userDefinedFunctions;
 
         // Initialize the User Defined Functions' data structures
-        UserDefinedFunctions.Configure(NbrInputs, NbrOutputs);
+        UserDefinedFunctions.Configure(Samples.NbrInputs, Samples.NbrOutputs);
     }
 }

@@ -129,4 +129,29 @@ public static class Utilities
 
         return orderOfMagnitude;
     }
+
+    public static object GetInstance(string strFullyQualifiedName)
+    {
+        if (string.IsNullOrEmpty(strFullyQualifiedName))
+        {
+            throw new ArgumentNullException($"Instance name must be specified.");
+        }
+
+        Type type = Type.GetType(strFullyQualifiedName);
+        if (type != null)
+        {
+            return Activator.CreateInstance(type);
+        }
+
+        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            type = asm.GetType(strFullyQualifiedName);
+            if (type != null)
+            {
+                return Activator.CreateInstance(type);
+            }
+        }
+
+        throw new InvalidOperationException($"Type {strFullyQualifiedName} was not found.");
+    }
 }

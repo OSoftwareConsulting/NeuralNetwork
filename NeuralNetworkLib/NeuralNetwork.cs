@@ -5,7 +5,8 @@
  * All Rights Reserved
 */
 
-using System;
+using NeuralNetworkLib.ActivationFunctions;
+using System.Reflection.Emit;
 using UtilitiesLib;
 
 namespace NeuralNetworkLib;
@@ -16,24 +17,24 @@ public class NeuralNetwork
     // The Neuron Layers
     public NeuronLayer[] Layers { get; }
 
-    // The random number generator to be used for all the layers' weights and biases initialization
-    private readonly Random rnd;
-
     // The user-defined functions used during training and testing
     private readonly IUserDefinedFunctions userDefinedFunctions;
+
+    // The random number generator to be used for all the layers' weights and biases initialization
+    private readonly Random rnd;
 
     // Used to store the errors for each training and testing sample after feed-forward processing of the sample inputs into outputs based on the sample's targets
     private readonly double[] errors;
 
-    // Constructor for the NeuralNetwork class
+    // Constructor for the NeuralNetwork class for Training
     public NeuralNetwork(
         int nbrInputs,
         NeuronLayerConfig[] layerConfigs,
-        Random rnd,
-        IUserDefinedFunctions userDefinedFunctions)
+        IUserDefinedFunctions userDefinedFunctions,
+        Random rnd)
     {
-        this.rnd = rnd;
         this.userDefinedFunctions = userDefinedFunctions;
+        this.rnd = rnd;
 
         // The number of layers L
         int nbrLayers = layerConfigs.Count();
@@ -53,9 +54,19 @@ public class NeuralNetwork
         }
 
         // The number of outputs from the neural network equals the number of outputs (neurons) in the last (L - 1) layer
-        int nbrOutputs = nbrInputs;
+        int nbrOutputs = Layers[nbrLayers - 1].NbrOutputs;
 
         errors = new double[nbrOutputs];
+    }
+
+    // Constructor for the NeuralNetwork class for Operation
+    private NeuralNetwork(
+        int nbrLayers,
+        IUserDefinedFunctions userDefinedFunctions)
+    {
+        this.userDefinedFunctions = userDefinedFunctions;
+
+        Layers = new NeuronLayer[nbrLayers];
     }
 
     // Performs the training of the neural network for the given training samples
@@ -89,7 +100,9 @@ public class NeuralNetwork
                 double[] targets = trainingTargets[ii];
 
                 // Compute the outputs for the training inputs
-                double[] outputs = ComputeOutputs(inputs);
+                double[] outputs = ComputeOutputs(
+                    inputs,
+                    forTraining: true);
 
                 // Call the user-defined function to compute the error (difference) between the training sample's targets and neural network outputs
                 userDefinedFunctions.ComputeErrors(targets, outputs, errors);
@@ -119,21 +132,98 @@ public class NeuralNetwork
             double[] targets = testingTargets[i];
 
             // Compute the outputs for the testing inputs
-            double[] outputs = ComputeOutputs(inputs);
+            double[] outputs = ComputeOutputs(
+                inputs,
+                forTraining: false);
 
             // Call the user-defined function to process the test result
             userDefinedFunctions.ProcessTestResult(i, inputs, targets, outputs, debug);
         }
     }
 
+    // Write the neural network's memory to the specified file path
+    public void Save(string filePath)
+    {
+        using (var bw = new BinaryWriter(new FileStream(filePath, FileMode.Create)))
+        {
+            bw.Write(Layers.Length);
+            bw.Write(Layers[0].NbrInputs);
+
+            WriteLayers(bw);
+        }
+    }
+
+    // Write the neural network's layers' memory to the specified BinaryWriter
+    private void WriteLayers(BinaryWriter bw)
+    {
+        foreach (var layer in Layers)
+        {
+            bw.Write(layer.NbrOutputs);
+            bw.Write(layer.ActivationFunction.TypeName);
+
+            layer.Write(bw);
+        }
+    }
+
+    // Read the neural network's memory from the specified file path
+    public static NeuralNetwork Load(
+        string filePath,
+        IUserDefinedFunctions userDefinedFunctions)
+    {
+        using (var br = new BinaryReader(new FileStream(filePath, FileMode.Open)))
+        {
+            int nbrLayers = br.ReadInt32();
+            int nbrInputs = br.ReadInt32();
+
+            var neuralNetwork = new NeuralNetwork(
+                nbrLayers,
+                userDefinedFunctions);
+
+            neuralNetwork.ReadLayers(br, nbrLayers, nbrInputs);
+
+            return neuralNetwork;
+        }
+    }
+
+    // Read the neural network's layers' memory from the specified BinaryReader
+    private void ReadLayers(
+        BinaryReader br,
+        int nbrLayers,
+        int nbrInputs)
+    {
+        for (int l = 0; l < nbrLayers; l++)
+        {
+            int nbrOutputs = br.ReadInt32();
+            string typeName = br.ReadString();
+
+            var activationFunction = (IActivationFunction) Utilities.GetInstance(typeName);
+            if (activationFunction == null)
+            {
+                throw new NullReferenceException($"Activation Function Instance {typeName} was not loaded");
+            }
+
+            activationFunction.TypeName = typeName;
+
+            Layers[l] = new NeuronLayer(nbrInputs, nbrOutputs, activationFunction);
+
+            Layers[l].Read(br);
+
+            // The number of inputs to the next layer is equal to the number of outputs from this layer
+            nbrInputs = nbrOutputs;
+        }
+    }
+
     // Computes the outputs for the given inputs
     private double[] ComputeOutputs(
-        double[] inoutputs)
+        double[] inoutputs,
+        bool forTraining)
     {
         foreach (var layer in Layers)
         {
             // The outputs of one layer become the inputs to the next layer
-            inoutputs = layer.ComputeOutputs(inoutputs);
+            inoutputs = layer.ComputeOutputs(
+                inoutputs,
+                forTraining);
         }
 
         // The outputs from the last layer are the outputs of the neural network

@@ -21,6 +21,9 @@ public class Samples
     public double[][] TestingInputs { get; }
     public double[][] TestingTargets { get; }
 
+    public int NbrOutputs { get; }
+    public int NbrInputs { get; }
+
     // Constructor that generates the training and testing samples based on the specified training fraction from the records
     // If a random number generator is specified, the order of the records is randomized before separating the records into the training and testing sample sets
     internal Samples(
@@ -40,10 +43,12 @@ public class Samples
             throw new ArgumentException($"The specified Number of Outputs {nbrOutputs} is invalid");
         }
 
+        NbrOutputs = nbrOutputs;
+        NbrInputs = nbrValuesPerRecord - nbrOutputs;
+
         int nbrRecords = records.Count();
         int nbrTrainingSamples = (int)(nbrRecords * trainingFraction);
         int nbrTestingSamples = nbrRecords - nbrTrainingSamples;
-        int nbrInputs = nbrValuesPerRecord - nbrOutputs;
 
         TrainingInputs = new double[nbrTrainingSamples][];
         TrainingTargets = new double[nbrTrainingSamples][];
@@ -53,7 +58,7 @@ public class Samples
         // Normalize the records' inputs
         if (normalizeInputs)
         {
-            NormalizeInputs(records, nbrInputs);
+            NormalizeInputs(records);
         }
 
         // Generate the sequence by which the records are added to the training and testing sample sets
@@ -68,19 +73,19 @@ public class Samples
         {
             int nn = sequence[n];
 
-            TrainingInputs[i] = new double[nbrInputs];
-            TrainingTargets[i] = new double[nbrOutputs];
+            TrainingInputs[i] = new double[NbrInputs];
+            TrainingTargets[i] = new double[NbrOutputs];
 
             int m = 0;
 
             // First N record values are training inputs
-            for (int j = 0; j < nbrInputs; j++, m++)
+            for (int j = 0; j < NbrInputs; j++, m++)
             {
                 TrainingInputs[i][j] = records[nn][m];
             }
 
             // Next M record values are training targets
-            for (int j = 0; j < nbrOutputs; j++, m++)
+            for (int j = 0; j < NbrOutputs; j++, m++)
             {
                 TrainingTargets[i][j] = records[nn][m];
             }
@@ -91,20 +96,20 @@ public class Samples
         {
             int nn = sequence[n];
 
-            TestingInputs[i] = new double[nbrInputs];
-            TestingTargets[i] = new double[nbrOutputs];
+            TestingInputs[i] = new double[NbrInputs];
+            TestingTargets[i] = new double[NbrOutputs];
 
             int m = 0;
 
             // First N record values are testing inputs
-            for (int j = 0; j < nbrInputs; j++, m++)
+            for (int j = 0; j < NbrInputs; j++, m++)
             {
                 TestingInputs[i][j] = records[nn][m];
 
             }
 
             // Next M record values are testing targets
-            for (int j = 0; j < nbrOutputs; j++, m++)
+            for (int j = 0; j < NbrOutputs; j++, m++)
             {
                 TestingTargets[i][j] = records[nn][m];
             }
@@ -113,13 +118,12 @@ public class Samples
 
     // Normalize the records' input values by the first record's inputs' order of magnitudes
     private void NormalizeInputs(
-        double[][] records,
-        int nbrInputs)
+        double[][] records)
     {
-        double[] inputFactors = new double[nbrInputs];
+        double[] inputFactors = new double[NbrInputs];
         double[] inputs = records[0];
 
-        for (int j = 0; j < nbrInputs; j++)
+        for (int j = 0; j < NbrInputs; j++)
         {
             inputFactors[j] = 1d / Math.Pow(10d, Utilities.OrderOfMagnitude(inputs[j]));
         }
@@ -129,7 +133,7 @@ public class Samples
         {
             inputs = records[n];
 
-            for (int j = 0; j < nbrInputs; j++)
+            for (int j = 0; j < NbrInputs; j++)
             {
                 inputs[j] *= inputFactors[j];
             }

@@ -9,6 +9,8 @@ namespace NeuralNetworkLib.ActivationFunctions;
 
 public class TanhActivationFunction : IActivationFunction
 {
+    public string TypeName { get; set; }
+
     public double Compute(double x)
     {
         if (x < -20.0)

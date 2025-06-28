@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "GANeuralNetwork": {
-      "commandName": "Project",
-      "commandLineArgs": "../../../../Datasets/magic04/magic04-ga.json"
-    }
-  }
-}

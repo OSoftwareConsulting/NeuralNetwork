@@ -9,6 +9,8 @@ namespace NeuralNetworkLib.ActivationFunctions;
 
 public class ReLUActivationFunction : IActivationFunction
 {
+    public string TypeName { get; set; }
+
     public double Compute(double x)
     {
         return x < 0.0 ? 0.0 : x;

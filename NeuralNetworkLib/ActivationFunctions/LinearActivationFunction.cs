@@ -9,6 +9,8 @@ namespace NeuralNetworkLib.ActivationFunctions;
 
 public class LinearActivationFunction : IActivationFunction
 {
+    public string TypeName { get; set; }
+
     private readonly double m;
     private readonly double b;
 

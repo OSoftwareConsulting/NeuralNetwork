@@ -9,6 +9,8 @@ namespace NeuralNetworkLib.ActivationFunctions;
 
 public class SoftMaxActivationFunction : IActivationFunction
 {
+    public string TypeName { get; set; }
+
     public double Compute(double x)
     {
         return Math.Exp(x);

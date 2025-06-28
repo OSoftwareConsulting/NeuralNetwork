@@ -10,6 +10,8 @@ using NeuralNetworkLib.ActivationFunctions;
 using Newtonsoft.Json;
 using SamplesGeneratorLib;
 using System.Reflection;
+using UtilitiesLib;
+using static SetupLib.SetupReader;
 
 namespace SetupLib;
 
@@ -76,7 +78,7 @@ public static class SetupReader
     }
 
     // The root JSON object
-    public class NeuralNetworkSetup
+    public class NeuralNetworkTestSetup
     {
         // General
 
@@ -91,8 +93,99 @@ public static class SetupReader
         // If specified, Seed is the int parameter to the Random class constructor, otherwise the random number generator is created without a parameter
         public int? Seed { get; set; }
 
-        // The number of inputs to the neural network
-        public int NbrInputs { get; set; }
+        // The number of outputs from the Last Layer (Neural Network)
+        public int NbrOutputs { get; set; }
+
+        // Used to create training and testing samples from a file
+        public FileSamplesGenerator FileSamplesGenerator { get; set; }
+
+        // Used to create training and testing samples by calling a function with random inputs between min & max values
+        public FunctionSamplesGenerator FunctionSamplesGenerator { get; set; }
+
+        // Neural Network
+
+        // The absolute File Path of the Neural Network's Memory
+        public string MemoryFilePath { get; set; }
+
+        // Testing
+
+        // Specifies the class implementing the IUserDefinedFunctions interface
+        public string UserDefinedFunctions { get; set; }
+    }
+
+    public static SetupLib.NeuralNetworkTestSetup GetNeuralNetworkTestSetup(string setupFilePath)
+    {
+        var setup = JsonConvert.DeserializeObject<NeuralNetworkTestSetup>(File.ReadAllText(setupFilePath));
+        if (setup == null)
+        {
+            throw new ArgumentNullException(nameof(setup));
+        }
+
+        if (setup.AssemblyPaths != null)
+        {
+            // load Assemblies from specified file paths
+            foreach (var assemblyPath in setup.AssemblyPaths)
+            {
+                Assembly.LoadFrom(assemblyPath);
+            }
+        }
+
+        Random rnd = setup.Seed.HasValue ? new Random(setup.Seed.Value) : new Random();
+
+        Samples samples;
+
+        if (setup.FileSamplesGenerator != null)
+        {
+            string dataFilePath = GetAbsoluteFilePath(setup.FileSamplesGenerator.FilePath, setupFilePath);
+
+            samples = GetSamplesFromFile(
+                setup.FileSamplesGenerator,
+                dataFilePath,
+                setup.NbrOutputs,
+                trainingFraction: 0.0,
+                rnd);
+        }
+        else if (setup.FunctionSamplesGenerator?.SamplesGeneratorFunction != null)
+        {
+            samples = GetSamplesFromDataGenerator(
+                setup.FunctionSamplesGenerator,
+                setup.NbrOutputs,
+                trainingFraction: 0.0,
+                rnd);
+        }
+        // Must specify a Samples Generator
+        else
+        {
+            throw new InvalidOperationException("Must specify a Samples Generator");
+        }
+
+        var memoryFilePath = GetAbsoluteFilePath(setup.MemoryFilePath, setupFilePath);
+
+        var userDefinedFunctions = GetUserDefinedFunctionsInstance(setup.UserDefinedFunctions);
+
+        return new SetupLib.NeuralNetworkTestSetup(
+            rnd,
+            setup.Debug,
+            samples,
+            memoryFilePath,
+            userDefinedFunctions);
+    }
+
+    // The root JSON object
+    public class NeuralNetworkTrainAndTestSetup
+    {
+        // General
+
+        // Flag to use to enable/disable debug messages, etc.
+        public bool Debug { get; set; }
+
+        // If specified, AssemblyPaths is an array of file paths to assembly DLL's
+        public string[] AssemblyPaths { get; set; }
+
+        // Data Set
+
+        // If specified, Seed is the int parameter to the Random class constructor, otherwise the random number generator is created without a parameter
+        public int? Seed { get; set; }
 
         // Used to create training and testing samples from a file
         public FileSamplesGenerator FileSamplesGenerator { get; set; }
@@ -107,6 +200,9 @@ public static class SetupReader
 
         // Neuron Layer Configurations (must specify at least one)
         public NeuronLayerConfig[] LayerConfigs { get; set; }
+
+        // The File Path of the Neural Network's Memory
+        public string MemoryFilePath { get; set; }
 
         // Training
 
@@ -125,37 +221,29 @@ public static class SetupReader
         public string UserDefinedFunctions { get; set; }
     }
 
-    public static SetupLib.NeuralNetworkSetup GetNeuralNetworkSetup(string filePath)
+    public static SetupLib.NeuralNetworkTrainAndTestSetup GetNeuralNetworkTrainAndTestSetup(string setupFilePath)
     {
-        var nnSetup = JsonConvert.DeserializeObject<NeuralNetworkSetup>(File.ReadAllText(filePath));
-
-        if (nnSetup == null)
+        var setup = JsonConvert.DeserializeObject<NeuralNetworkTrainAndTestSetup>(File.ReadAllText(setupFilePath));
+        if (setup == null)
         {
-            throw new ArgumentNullException(nameof(nnSetup));
+            throw new ArgumentNullException(nameof(setup));
         }
 
-        if (nnSetup.AssemblyPaths != null)
+        if (setup.AssemblyPaths != null)
         {
             // load Assemblies from specified file paths
-            foreach (var assemblyPath in nnSetup.AssemblyPaths)
+            foreach (var assemblyPath in setup.AssemblyPaths)
             {
                 Assembly.LoadFrom(assemblyPath);
             }
         }
 
-        Random rnd = nnSetup.Seed.HasValue ? new Random(nnSetup.Seed.Value) : new Random();
+        Random rnd = setup.Seed.HasValue ? new Random(setup.Seed.Value) : new Random();
 
         var neuronLayerConfigs = new List<NeuralNetworkLib.NeuronLayerConfig>();
-        foreach (var testSetupLayerConfig in nnSetup.LayerConfigs)
+        foreach (var testSetupLayerConfig in setup.LayerConfigs)
         {
-            var afInstance = GetInstance(testSetupLayerConfig.ActivationFunction);
-
-            if (afInstance == null)
-            {
-                throw new NullReferenceException("Activation Function Instance was not loaded");
-            }
-
-            IActivationFunction activationFunction = (IActivationFunction)afInstance;
+            var activationFunction = GetActivationFunctionInstance(testSetupLayerConfig.ActivationFunction);
 
             neuronLayerConfigs.Add(new NeuralNetworkLib.NeuronLayerConfig(
                 testSetupLayerConfig.NbrOutputs,
@@ -174,51 +262,23 @@ public static class SetupReader
 
         Samples samples;
 
-        if (nnSetup.FileSamplesGenerator != null)
+        if (setup.FileSamplesGenerator != null)
         {
-            string dataFilePath = Path.IsPathRooted(nnSetup.FileSamplesGenerator.FilePath) ?
-                nnSetup.FileSamplesGenerator.FilePath :
-                Path.Combine(
-                    Path.GetDirectoryName(filePath) ?? throw new NullReferenceException(), 
-                    nnSetup.FileSamplesGenerator.FilePath);
+            string dataFilePath = GetAbsoluteFilePath(setup.FileSamplesGenerator.FilePath, setupFilePath);
 
-            samples = SamplesGeneratorLib.FileSamplesGenerator.GetSamples(
-                nbrOutputs,
-                nnSetup.TrainingFraction,
-                nnSetup.FileSamplesGenerator.NormalizeInputs ?? false,
+            samples = GetSamplesFromFile(
+                setup.FileSamplesGenerator,
                 dataFilePath,
-                nnSetup.FileSamplesGenerator.Separator,
-                nnSetup.FileSamplesGenerator.SkipRows,
-                nnSetup.FileSamplesGenerator.SkipColumns,
-                nnSetup.FileSamplesGenerator.RandomizeSamples ? rnd : null);
-        }
-        else if (nnSetup.FunctionSamplesGenerator?.SamplesGeneratorFunction != null)
-        {
-            var sgfInstance = GetInstance(nnSetup.FunctionSamplesGenerator.SamplesGeneratorFunction);
-
-            if (sgfInstance == null)
-            {
-                throw new NullReferenceException("Samples Generator Function Instance was not loaded");
-            }
-
-            ISamplesGeneratorFunction dataGeneratorFunction = (ISamplesGeneratorFunction)sgfInstance;
-
-            var valueRanges = new List<SamplesGeneratorLib.FunctionSamplesGenerator.ValueRange>();
-            foreach (var valueRange in nnSetup.FunctionSamplesGenerator.ValueRanges)
-            {
-                // MinValue & MaxValue: specifies the range for the input set randomly
-                valueRanges.Add(new SamplesGeneratorLib.FunctionSamplesGenerator.ValueRange(
-                    valueRange.MinValue,
-                    valueRange.MaxValue));
-            }
-
-            samples = SamplesGeneratorLib.FunctionSamplesGenerator.GetSamples(
                 nbrOutputs,
-                nnSetup.TrainingFraction,
-                nnSetup.FunctionSamplesGenerator.NormalizeInputs ?? false,
-                dataGeneratorFunction,
-                nnSetup.FunctionSamplesGenerator.NbrRecords,
-                valueRanges.ToArray(),
+                setup.TrainingFraction,
+                rnd);
+        }
+        else if (setup.FunctionSamplesGenerator?.SamplesGeneratorFunction != null)
+        {
+            samples = GetSamplesFromDataGenerator(
+                setup.FunctionSamplesGenerator,
+                nbrOutputs,
+                setup.TrainingFraction,
                 rnd);
         }
         // Must specify a Samples Generator
@@ -227,24 +287,19 @@ public static class SetupReader
             throw new InvalidOperationException("Must specify a Samples Generator");
         }
 
-        var udfInstance = GetInstance(nnSetup.UserDefinedFunctions);
+        var memoryFilePath = GetAbsoluteFilePath(setup.MemoryFilePath, setupFilePath);
 
-        if (udfInstance == null)
-        {
-            throw new NullReferenceException("User-Defiined Function Instance was not loaded");
-        }
+        var userDefinedFunctions = GetUserDefinedFunctionsInstance(setup.UserDefinedFunctions);
 
-        IUserDefinedFunctions userDefinedFunctions = (IUserDefinedFunctions)udfInstance;
-
-        return new SetupLib.NeuralNetworkSetup(
+        return new SetupLib.NeuralNetworkTrainAndTestSetup(
             rnd,
-            nnSetup.Debug,
-            nnSetup.NbrInputs,
+            setup.Debug,
             samples,
             neuronLayerConfigs.ToArray(),
-            nnSetup.NbrEpochs,
-            nnSetup.TrainingRate,
-            nnSetup.TrainingMomentum,
+            memoryFilePath,
+            setup.NbrEpochs,
+            setup.TrainingRate,
+            setup.TrainingMomentum,
             userDefinedFunctions);
     }
 
@@ -277,9 +332,6 @@ public static class SetupReader
         // If specified, Seed is the int parameter to the Random class constructor, otherwise the random number generator is created without a parameter
         public int? Seed { get; set; }
 
-        // The number of inputs to the neural network
-        public int NbrInputs { get; set; }
-
         // The number of outputs from the Last Layer (Neural Network)
         public int NbrOutputs { get; set; }
 
@@ -302,6 +354,9 @@ public static class SetupReader
 
         // The Activation Function to use for the Output Layer
         public string OutputLayerActivationFunction { get; set; }
+
+        // The File Path of the Neural Network's Memory
+        public string MemoryFilePath { get; set; }
 
         // Training
 
@@ -338,93 +393,57 @@ public static class SetupReader
         public bool FitnessLowerBetter { get; set; }
     }
 
-    public static SetupLib.GeneticAlgorithmSetup GetGeneticAlgorithmSetup(string filePath)
+    public static SetupLib.GeneticAlgorithmSetup GetGeneticAlgorithmSetup(string setupFilePath)
     {
-        var gaSetup = JsonConvert.DeserializeObject<GeneticAlgorithmSetup>(File.ReadAllText(filePath));
-
-        if (gaSetup == null)
+        var setup = JsonConvert.DeserializeObject<GeneticAlgorithmSetup>(File.ReadAllText(setupFilePath));
+        if (setup == null)
         {
-            throw new ArgumentNullException(nameof(gaSetup));
+            throw new ArgumentNullException(nameof(setup));
         }
 
-        if (gaSetup.AssemblyPaths != null)
+        if (setup.AssemblyPaths != null)
         {
             // load Assemblies from specified file paths
-            foreach (var assemblyPath in gaSetup.AssemblyPaths)
+            foreach (var assemblyPath in setup.AssemblyPaths)
             {
                 Assembly.LoadFrom(assemblyPath);
             }
         }
 
-        Random rnd = gaSetup.Seed.HasValue ? new Random(gaSetup.Seed.Value) : new Random();
+        Random rnd = setup.Seed.HasValue ? new Random(setup.Seed.Value) : new Random();
 
         var activationFunctions = new List<IActivationFunction>();
-        foreach (var activationFunctionAssemblyPath in gaSetup.LayerConfig.ActivationFunction)
+        foreach (var activationFunctionAssemblyPath in setup.LayerConfig.ActivationFunction)
         {
-            var afInstance = GetInstance(activationFunctionAssemblyPath);
-
-            if (afInstance == null)
-            {
-                throw new NullReferenceException($"Activation Function Instance {activationFunctionAssemblyPath} was not loaded");
-            }
-
-            IActivationFunction activationFunction = (IActivationFunction)afInstance;
+            var activationFunction = GetActivationFunctionInstance(activationFunctionAssemblyPath);
 
             activationFunctions.Add(activationFunction);
         }
 
         var gaNeuronLayerConfig = new SetupLib.GANeuronLayerConfig(
-            gaSetup.LayerConfig.NbrOutputs,
+            setup.LayerConfig.NbrOutputs,
             activationFunctions.ToArray(),
-            gaSetup.LayerConfig.InitialWeightRange);
+            setup.LayerConfig.InitialWeightRange);
 
         Samples samples;
 
-        if (gaSetup.FileSamplesGenerator != null)
+        if (setup.FileSamplesGenerator != null)
         {
-            string dataFilePath = Path.IsPathRooted(gaSetup.FileSamplesGenerator.FilePath) ?
-                gaSetup.FileSamplesGenerator.FilePath :
-                Path.Combine(
-                    Path.GetDirectoryName(filePath) ?? throw new NullReferenceException(),
-                    gaSetup.FileSamplesGenerator.FilePath);
+            string dataFilePath = GetAbsoluteFilePath(setup.FileSamplesGenerator.FilePath, setupFilePath);
 
-            samples = SamplesGeneratorLib.FileSamplesGenerator.GetSamples(
-                gaSetup.NbrOutputs,
-                gaSetup.TrainingFraction,
-                gaSetup.FileSamplesGenerator.NormalizeInputs ?? false,
+            samples = GetSamplesFromFile(
+                setup.FileSamplesGenerator,
                 dataFilePath,
-                gaSetup.FileSamplesGenerator.Separator,
-                gaSetup.FileSamplesGenerator.SkipRows,
-                gaSetup.FileSamplesGenerator.SkipColumns,
-                gaSetup.FileSamplesGenerator.RandomizeSamples ? rnd : null);
+                setup.NbrOutputs,
+                setup.TrainingFraction,
+                rnd);
         }
-        else if (gaSetup.FunctionSamplesGenerator?.SamplesGeneratorFunction != null)
+        else if (setup.FunctionSamplesGenerator?.SamplesGeneratorFunction != null)
         {
-            var sgfInstance = GetInstance(gaSetup.FunctionSamplesGenerator.SamplesGeneratorFunction);
-
-            if (sgfInstance == null)
-            {
-                throw new NullReferenceException("Samples Generator Function Instance was not loaded");
-            }
-
-            ISamplesGeneratorFunction dataGeneratorFunction = (ISamplesGeneratorFunction)sgfInstance;
-
-            var valueRanges = new List<SamplesGeneratorLib.FunctionSamplesGenerator.ValueRange>();
-            foreach (var valueRange in gaSetup.FunctionSamplesGenerator.ValueRanges)
-            {
-                // MinValue & MaxValue: specifies the range for the input set randomly
-                valueRanges.Add(new SamplesGeneratorLib.FunctionSamplesGenerator.ValueRange(
-                    valueRange.MinValue,
-                    valueRange.MaxValue));
-            }
-
-            samples = SamplesGeneratorLib.FunctionSamplesGenerator.GetSamples(
-                gaSetup.NbrOutputs,
-                gaSetup.TrainingFraction,
-                gaSetup.FunctionSamplesGenerator.NormalizeInputs ?? false,
-                dataGeneratorFunction,
-                gaSetup.FunctionSamplesGenerator.NbrRecords,
-                valueRanges.ToArray(),
+            samples = GetSamplesFromDataGenerator(
+                setup.FunctionSamplesGenerator,
+                setup.NbrOutputs,
+                setup.TrainingFraction,
                 rnd);
         }
         // Must specify a Samples Generator
@@ -433,66 +452,109 @@ public static class SetupReader
             throw new InvalidOperationException("Must specify a Samples Generator");
         }
 
-        var olafInstance = GetInstance(gaSetup.OutputLayerActivationFunction);
+        var outputLayerActivationFunction = GetActivationFunctionInstance(setup.OutputLayerActivationFunction);
 
-        if (olafInstance == null)
-        {
-            throw new NullReferenceException($"Activation Function Instance {gaSetup.OutputLayerActivationFunction} was not loaded");
-        }
+        var memoryFilePath = GetAbsoluteFilePath(setup.MemoryFilePath, setupFilePath);
 
-        IActivationFunction outputLayerActivationFunction = (IActivationFunction)olafInstance;
-
-        var udfInstance = GetInstance(gaSetup.UserDefinedFunctions);
-
-        if (udfInstance == null)
-        {
-            throw new NullReferenceException($"User-Defiined Function Instance {gaSetup.UserDefinedFunctions} was not loaded");
-        }
-
-        IUserDefinedFunctions userDefinedFunctions = (IUserDefinedFunctions)udfInstance;
+        var userDefinedFunctions = GetUserDefinedFunctionsInstance(setup.UserDefinedFunctions);
 
         return new SetupLib.GeneticAlgorithmSetup(
             rnd,
-            gaSetup.Debug,
-            gaSetup.NbrInputs,
-            gaSetup.NbrOutputs,
+            setup.Debug,
             samples,
-            gaSetup.NbrLayers,
+            setup.NbrLayers,
             gaNeuronLayerConfig,
             outputLayerActivationFunction,
-            gaSetup.NbrEpochs,
-            gaSetup.TrainingRate,
-            gaSetup.TrainingMomentum,
+            memoryFilePath,
+            setup.NbrEpochs,
+            setup.TrainingRate,
+            setup.TrainingMomentum,
             userDefinedFunctions,
-            gaSetup.PopulationSize,
-            gaSetup.SelectionPercentage,
-            gaSetup.MatingPercentage,
-            gaSetup.MutationProbability,
-            gaSetup.FitnessLowerBetter);
+            setup.PopulationSize,
+            setup.SelectionPercentage,
+            setup.MatingPercentage,
+            setup.MutationProbability,
+            setup.FitnessLowerBetter);
     }
 
-    private static object GetInstance(string strFullyQualifiedName)
+    private static string GetAbsoluteFilePath(string filePath, string baseFilePath) => Path.IsPathRooted(filePath) ?
+        filePath :
+        Path.Combine(
+            Path.GetDirectoryName(baseFilePath) ?? throw new NullReferenceException(),
+            filePath);
+
+    private static Samples GetSamplesFromFile(
+        FileSamplesGenerator fileSamplesGenerator,
+        string dataFilePath,
+        int nbrOutputs,
+        double trainingFraction,
+        Random rnd)
     {
-        if (string.IsNullOrEmpty(strFullyQualifiedName))
+        return SamplesGeneratorLib.FileSamplesGenerator.GetSamples(
+            nbrOutputs,
+            trainingFraction,
+            fileSamplesGenerator.NormalizeInputs ?? false,
+            dataFilePath,
+            fileSamplesGenerator.Separator,
+            fileSamplesGenerator.SkipRows,
+            fileSamplesGenerator.SkipColumns,
+            fileSamplesGenerator.RandomizeSamples ? rnd : null);
+    }
+
+    private static Samples GetSamplesFromDataGenerator(
+        FunctionSamplesGenerator functionSamplesGenerator,
+        int nbrOutputs,
+        double trainingFraction,
+        Random rnd)
+    {
+        ISamplesGeneratorFunction dataGeneratorFunction = (ISamplesGeneratorFunction)Utilities.GetInstance(functionSamplesGenerator.SamplesGeneratorFunction);
+        if (dataGeneratorFunction == null)
         {
-            throw new ArgumentNullException($"Instance name must be specified.");
+            throw new NullReferenceException($"Samples Generator Function Instance {functionSamplesGenerator.SamplesGeneratorFunction} was not loaded");
         }
 
-        Type type = Type.GetType(strFullyQualifiedName);
-        if (type != null)
+        var valueRanges = new List<SamplesGeneratorLib.FunctionSamplesGenerator.ValueRange>();
+        foreach (var valueRange in functionSamplesGenerator.ValueRanges)
         {
-            return Activator.CreateInstance(type);
+            // MinValue & MaxValue: specifies the range for the input set randomly
+            valueRanges.Add(new SamplesGeneratorLib.FunctionSamplesGenerator.ValueRange(
+                valueRange.MinValue,
+                valueRange.MaxValue));
         }
 
-        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        Samples samples = SamplesGeneratorLib.FunctionSamplesGenerator.GetSamples(
+            nbrOutputs,
+            trainingFraction,
+            functionSamplesGenerator.NormalizeInputs ?? false,
+            dataGeneratorFunction,
+            functionSamplesGenerator.NbrRecords,
+            valueRanges.ToArray(),
+            rnd);
+
+        return samples;
+    }
+
+    private static IActivationFunction GetActivationFunctionInstance(string strFullyQualifiedName)
+    {
+        var activationFunction = (IActivationFunction)Utilities.GetInstance(strFullyQualifiedName);
+        if (activationFunction == null)
         {
-            type = asm.GetType(strFullyQualifiedName);
-            if (type != null)
-            {
-                return Activator.CreateInstance(type);
-            }
+            throw new NullReferenceException($"Activation Function Instance {strFullyQualifiedName} was not loaded");
         }
 
-        throw new InvalidOperationException($"Type {strFullyQualifiedName} was not found.");
+        activationFunction.TypeName = strFullyQualifiedName;
+
+        return activationFunction;
+    }
+
+    private static IUserDefinedFunctions GetUserDefinedFunctionsInstance(string userDefinedFunctionsTypeName)
+    {
+        var userDefinedFunctions = (IUserDefinedFunctions)Utilities.GetInstance(userDefinedFunctionsTypeName);
+        if (userDefinedFunctions == null)
+        {
+            throw new NullReferenceException($"User-Defined Functions Instance {userDefinedFunctionsTypeName} was not loaded");
+        }
+
+        return userDefinedFunctions;
     }
 }
