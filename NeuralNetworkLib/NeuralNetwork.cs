@@ -1,12 +1,11 @@
 ﻿/*
  * Copyright ©
- * 2025
+ * 2026
  * Osella Ventures, LLC
  * All Rights Reserved
 */
 
 using NeuralNetworkLib.ActivationFunctions;
-using System.Reflection.Emit;
 using UtilitiesLib;
 
 namespace NeuralNetworkLib;
@@ -39,7 +38,7 @@ public class NeuralNetwork
         // The number of layers L
         int nbrLayers = layerConfigs.Count();
 
-        Layers = new NeuronLayer[nbrLayers];
+        Layers = new TrainingAndTestingNeuronLayer[nbrLayers];
 
         // Create the Neuron Layers based on their configuration
         for (int l = 0; l < nbrLayers; l++)
@@ -47,7 +46,12 @@ public class NeuralNetwork
             var layerConfig = layerConfigs[l];
 
             // Create the Neuron Layer based on its configuration
-            Layers[l] = new NeuronLayer(nbrInputs, layerConfig.NbrOutputs, layerConfig.ActivationFunction, rnd, layerConfig.InitialWeightRange);
+            Layers[l] = new TrainingAndTestingNeuronLayer(
+                nbrInputs,
+                layerConfig.NbrOutputs,
+                layerConfig.ActivationFunction,
+                rnd,
+                layerConfig.InitialWeightRange);
 
             // The number of inputs to the next layer is equal to the number of outputs from this layer
             nbrInputs = layerConfig.NbrOutputs;
@@ -66,7 +70,7 @@ public class NeuralNetwork
     {
         this.userDefinedFunctions = userDefinedFunctions;
 
-        Layers = new NeuronLayer[nbrLayers];
+        Layers = new TestingOnlyNeuronLayer[nbrLayers];
     }
 
     // Performs the training of the neural network for the given training samples
@@ -200,7 +204,10 @@ public class NeuralNetwork
 
             activationFunction.TypeName = typeName;
 
-            Layers[l] = new NeuronLayer(nbrInputs, nbrOutputs, activationFunction);
+            Layers[l] = new TestingOnlyNeuronLayer(
+                nbrInputs,
+                nbrOutputs,
+                activationFunction);
 
             Layers[l].Read(br);
 
@@ -232,7 +239,7 @@ public class NeuralNetwork
         // Start from the last layer back to the first layer
         for (int l = Layers.Count() - 1; l >= 0; l--)
         {
-            var layer = Layers[l];
+            var layer = Layers[l] as TrainingAndTestingNeuronLayer;
 
             // Errors for this layer are computed and then fed back to the previous layer
             errors = layer.ComputeErrors(errors);

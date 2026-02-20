@@ -1,6 +1,6 @@
 ﻿/*
  * Copyright ©
- * 2025
+ * 2026
  * Osella Ventures, LLC
  * All Rights Reserved
 */
@@ -108,6 +108,10 @@ public static class Utilities
     public static int OrderOfMagnitude(double value)
     {
         double absValue = Math.Abs(value);
+        if (absValue == 0d)
+        {
+            return 0;
+        }
         int orderOfMagnitude = 0;
 
         if (absValue >= 10d)
