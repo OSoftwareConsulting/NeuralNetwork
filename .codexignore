@@ -1,1 +1,15 @@
-.codexignore
+.git/
+.gitignore
+LICENSE
+
+# Ignore build artifacts for all projects
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/*.user
+
+# Ignore large datasets if you have them
+/DataSets/
+/Exercise/
+

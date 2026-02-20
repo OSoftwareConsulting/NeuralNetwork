@@ -21,7 +21,6 @@ public class NeuronLayer
     private readonly double[] outputs;      // No
     private readonly double[] inputs;       // Ni
     private readonly double[][] weights;    // No x Ni
-    private readonly double[][] weightsT;   // Ni x No
     private readonly double[][] gradientsW; // No x Ni
     private readonly double[][] deltaW;     // No x Ni
     private readonly double[][] prevDeltaW; // No x Ni (for momentum calculation)
@@ -40,7 +39,9 @@ public class NeuronLayer
     // The random number generator to be used for the layer's weights and biases initialization
     private readonly Random rnd;
 
-    // Constructor for the NeuronLayer class for Training
+    /// <summary>
+    /// Constructor for the NeuronLayer class for Training
+    /// </summary>
     public NeuronLayer(
         int nbrInputs,
         int nbrOutputs,
@@ -67,11 +68,6 @@ public class NeuronLayer
             deltaW[k] = new double[nbrInputs];
             prevDeltaW[k] = new double[nbrInputs];
         }
-        weightsT = new double[nbrInputs][];
-        for (int j = 0; j < nbrInputs; j++)
-        {
-            weightsT[j] = new double[nbrOutputs];
-        }
         biases = new double[nbrOutputs];
         gradientsB = new double[nbrOutputs];
         deltaB = new double[nbrOutputs];
@@ -84,7 +80,9 @@ public class NeuronLayer
         Reset(initialWeightRange);
     }
 
-    // Constructor for the NeuronLayer class for Operation
+    /// <summary>
+    /// Constructor for the NeuronLayer class for Operation
+    /// </summary>
     public NeuronLayer(
         int nbrInputs,
         int nbrOutputs,
@@ -104,19 +102,28 @@ public class NeuronLayer
         nets = new double[nbrOutputs];
     }
 
-    // Performs the feed-forward processing of the inputs to the layer to compute the outputs from the layer
+    /// <summary>
+    /// Checks inputs size, saves the inputs for updating the weights (during training only), and then 
+    /// performs the feed-forward processing of the inputs to the layer to compute the outputs from the layer
+    /// </summary>
     public double[] ComputeOutputs(
-        double[] inputs,
-        bool forTraining)
+        double[] inputs)
     {
-        // Save inputs for updating the weights
-        if (forTraining)
+        if (inputs.Length != NbrInputs)
         {
-            for (int j = 0; j < NbrInputs; j++)
-            {
-                this.inputs[j] = inputs[j];
-            }
+            throw new ArgumentException(
+                $"Expected {NbrInputs} inputs but received {inputs.Length}.",
+                nameof(inputs));
         }
+
+        // Save the inputs for updating the weights (during training only)
+        if (this.inputs is not null)
+        {
+            Array.Copy(inputs, this.inputs, NbrInputs);
+        }
+
+        // Cache the inputs in a local variable for faster access in the loop below
+        var inputValues = inputs;
 
         // For each of the layer's neurons, compute its net value and output (from the layer's activation function)
         for (int k = 0; k < NbrOutputs; k++)
@@ -124,10 +131,11 @@ public class NeuronLayer
             // Compute the net value: sum(W*x+b)
 
             nets[k] = biases[k];
+            var weightsK = weights[k];
 
             for (int j = 0; j < NbrInputs; j++)
             {
-                nets[k] += weights[k][j] * inputs[j];
+                nets[k] += weightsK[j] * inputValues[j];
             }
 
             // Compute the neuron's output (activation)
@@ -140,31 +148,52 @@ public class NeuronLayer
         return outputs;
     }
 
-    // Computes the errors that are propagated from this layer back to the previous layer
-    // Errors In -> Errors Out
+    /// <summary>
+    /// Computes the errors that are propagated from this layer back to the previous layer
+    /// Errors In -> Errors Out
+    /// </summary>
     public double[] ComputeErrors(
         double[] errorsIn)
     {
+        if (inputs is null)
+        {
+            throw new InvalidOperationException(
+                "Must use a training layer instance to call ComputeErrors");
+        }
+
+        if (errorsIn.Length != NbrOutputs)
+        {
+            throw new ArgumentException(
+                $"Expected {NbrOutputs} errors but received {errorsIn.Length}.",
+                nameof(errorsIn));
+        }
+
+        // Cache the arrays in local variables for faster access in the loops below
+        var signalsLocal = signals;
+        var errorsOutLocal = errorsOut;
+        var weightsLocal = weights;
+
         // Compute the layer's signal array
         for (int k = 0; k < NbrOutputs; k++)
         {
             derivatives[k] = ActivationFunction.Derivative(nets[k], outputs[k]);
 
-            signals[k] = errorsIn[k] * derivatives[k];
+            signalsLocal[k] = errorsIn[k] * derivatives[k];
         }
 
         // Compute the errors propagated to the previous layer
         for (int j = 0; j < NbrInputs; j++)
         {
-            errorsOut[j] = 0.0;
+            errorsOutLocal[j] = 0.0;
 
             for (int k = 0; k < NbrOutputs; k++)
             {
-                errorsOut[j] += weightsT[j][k] * signals[k];
+                var weightsK = weightsLocal[k];
+                errorsOutLocal[j] += weightsK[j] * signalsLocal[k];
             }
         }
 
-        return errorsOut;
+        return errorsOutLocal;
     }
 
     // Updates the layers' weight matrix and bias array based on the learning rate and momentum
@@ -172,23 +201,39 @@ public class NeuronLayer
         double rate,
         double momentum)
     {
+        if (inputs is null)
+        {
+            throw new InvalidOperationException(
+                "Must use a training layer instance to call Update");
+        }
+
+        var inputsLocal = inputs;
+        var signalsLocal = signals;
+        var weightsLocal = weights;
+        var gradientsWLocal = gradientsW;
+        var deltaWLocal = deltaW;
+        var prevDeltaWLocal = prevDeltaW;
+
         // Update the layers' weight matrix and bias array
         for (int k = 0; k <NbrOutputs; k++)
         {
             // Update the neuron's bias
-            gradientsB[k] = signals[k];
+            gradientsB[k] = signalsLocal[k];
             deltaB[k] = rate * gradientsB[k];
             biases[k] += deltaB[k] + (prevDeltaB[k] * momentum);
             prevDeltaB[k] = deltaB[k];
 
             // Update the neuron's weight array
+            var weightsK = weightsLocal[k];
+            var gradientsWK = gradientsWLocal[k];
+            var deltaWK = deltaWLocal[k];
+            var prevDeltaWK = prevDeltaWLocal[k];
             for (int j = 0; j < NbrInputs; j++)
             {
-                gradientsW[k][j] = signals[k] * inputs[j];
-                deltaW[k][j] = rate * gradientsW[k][j];
-                weights[k][j] += deltaW[k][j] + (prevDeltaW[k][j] * momentum);
-                weightsT[j][k] = weights[k][j];
-                prevDeltaW[k][j] = deltaW[k][j];
+                gradientsWK[j] = signalsLocal[k] * inputsLocal[j];
+                deltaWK[j] = rate * gradientsWK[j];
+                weightsK[j] += deltaWK[j] + (prevDeltaWK[j] * momentum);
+                prevDeltaWK[j] = deltaWK[j];
             }
         }
     }
@@ -240,7 +285,7 @@ public class NeuronLayer
 
             for (int j = 0; j < NbrInputs; j++)
             {
-                weightsT[j][k] = weights[k][j] = rnd.NextDouble(minValue, valueRange);
+                weights[k][j] = rnd.NextDouble(minValue, valueRange);
             }
         }
     }

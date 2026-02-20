@@ -100,9 +100,7 @@ public class NeuralNetwork
                 double[] targets = trainingTargets[ii];
 
                 // Compute the outputs for the training inputs
-                double[] outputs = ComputeOutputs(
-                    inputs,
-                    forTraining: true);
+                double[] outputs = ComputeOutputs(inputs);
 
                 // Call the user-defined function to compute the error (difference) between the training sample's targets and neural network outputs
                 userDefinedFunctions.ComputeErrors(targets, outputs, errors);
@@ -132,9 +130,7 @@ public class NeuralNetwork
             double[] targets = testingTargets[i];
 
             // Compute the outputs for the testing inputs
-            double[] outputs = ComputeOutputs(
-                inputs,
-                forTraining: false);
+            double[] outputs = ComputeOutputs(inputs);
 
             // Call the user-defined function to process the test result
             userDefinedFunctions.ProcessTestResult(i, inputs, targets, outputs, debug);
@@ -215,15 +211,12 @@ public class NeuralNetwork
 
     // Computes the outputs for the given inputs
     private double[] ComputeOutputs(
-        double[] inoutputs,
-        bool forTraining)
+        double[] inoutputs)
     {
         foreach (var layer in Layers)
         {
             // The outputs of one layer become the inputs to the next layer
-            inoutputs = layer.ComputeOutputs(
-                inoutputs,
-                forTraining);
+            inoutputs = layer.ComputeOutputs(inoutputs);
         }
 
         // The outputs from the last layer are the outputs of the neural network
