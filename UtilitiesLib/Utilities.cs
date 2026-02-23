@@ -5,6 +5,7 @@
  * All Rights Reserved
 */
 
+using System.Reflection;
 using System.Text;
 
 namespace UtilitiesLib;
@@ -49,9 +50,10 @@ public static class Utilities
         {
             if (i > 0)
             {
-                sb.Append($"{valuesSeparator} ");
+                sb.Append(valuesSeparator);
+                sb.Append(' ');
             }
-            sb.Append($"{values[i].ToString(format)}");
+            sb.Append(values[i].ToString(format));
         }
 
         if (addEOL)
@@ -77,10 +79,10 @@ public static class Utilities
 
         if (rnd != null)
         {
-            for (int i = 0; i < len; i++)
+            // Knuth Shuffle
+            for (int i = len - 1; i > 0; i--)
             {
-                int ii = rnd.Next(0, len);
-
+                int ii = rnd.Next(0, i + 1);
                 var tmp = sequence[i];
                 sequence[i] = sequence[ii];
                 sequence[ii] = tmp;
@@ -138,7 +140,9 @@ public static class Utilities
     {
         if (string.IsNullOrEmpty(strFullyQualifiedName))
         {
-            throw new ArgumentNullException($"Instance name must be specified.");
+            throw new ArgumentNullException(
+                nameof(strFullyQualifiedName),
+                "Instance name must be specified.");
         }
 
         Type type = Type.GetType(strFullyQualifiedName);
@@ -157,5 +161,33 @@ public static class Utilities
         }
 
         throw new InvalidOperationException($"Type {strFullyQualifiedName} was not found.");
+    }
+
+    public static string GetAbsoluteFilePath(string filePath, string baseFilePath) => Path.IsPathRooted(filePath) ?
+        filePath :
+        Path.Combine(
+            Path.GetDirectoryName(baseFilePath) ?? throw new InvalidOperationException(),
+            filePath);
+
+    public static void LoadAssemblies(string[]? assemblyPaths, string setupFilePath)
+    {
+        if (assemblyPaths == null) return;
+
+        foreach (var rawPath in assemblyPaths)
+        {
+            if (string.IsNullOrWhiteSpace(rawPath))
+            {
+                throw new InvalidOperationException("AssemblyPaths contains an empty path.");
+            }
+
+            var absolutePath = GetAbsoluteFilePath(rawPath, setupFilePath);
+
+            if (!File.Exists(absolutePath))
+            {
+                throw new FileNotFoundException($"Assembly not found: {absolutePath}", absolutePath);
+            }
+
+            Assembly.LoadFrom(absolutePath);
+        }
     }
 }

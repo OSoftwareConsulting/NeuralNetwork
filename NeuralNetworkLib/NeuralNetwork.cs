@@ -199,7 +199,7 @@ public class NeuralNetwork
             var activationFunction = (IActivationFunction) Utilities.GetInstance(typeName);
             if (activationFunction == null)
             {
-                throw new NullReferenceException($"Activation Function Instance {typeName} was not loaded");
+                throw new InvalidOperationException($"Activation Function Instance {typeName} was not loaded");
             }
 
             activationFunction.TypeName = typeName;
