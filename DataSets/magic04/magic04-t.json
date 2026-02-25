@@ -5,14 +5,14 @@
   ],
   "NbrOutputs": 2,
   "FileSamplesGenerator": {
-    "FilePath": "magic04.csv",
+    "CombinedFilePath": "magic04.csv",
+    "TrainingFraction": 0.8,
     "Separator": ",",
     "SkipRows": 0,
     "SkipColumns": 0,
     "RandomizeSamples": true,
     "NormalizeInputs": true
   },
-  "TrainingFraction": 0.8,
   "MemoryFilePath": "magic04.nnm",
   "UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches"
 }

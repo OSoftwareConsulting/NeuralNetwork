@@ -10,10 +10,9 @@ namespace SamplesGeneratorLib;
 // Abstract base class for Samples Generators
 public abstract class SamplesGenerator
 {
-    protected int nbrValuesPerRecord;   // number of inputs (defined or calculated) + nbrOutputs
-    protected double[][] records;       // number of records x nbrValuesPerRecord 
-
-    protected readonly int nbrOutputs;
+    protected int NbrValuesPerRecord { get; set; }  // number of inputs (defined or calculated) + nbrOutputs
+    protected double[][] Records { get; set; }      // number of records x nbrValuesPerRecord 
+    protected int NbrOutputs { get; }
 
     protected SamplesGenerator(
         int nbrOutputs)
@@ -23,9 +22,8 @@ public abstract class SamplesGenerator
             throw new InvalidOperationException();
         }
 
-        nbrValuesPerRecord = 0;
-
-        this.nbrOutputs = nbrOutputs;
+        NbrValuesPerRecord = 0;
+        NbrOutputs = nbrOutputs;
     }
 
     protected Samples GetSamples(
@@ -36,9 +34,23 @@ public abstract class SamplesGenerator
         return new Samples(
             trainingFraction,
             normalizeInputs,
-            records,
-            nbrValuesPerRecord,
-            nbrOutputs,
+            Records,
+            NbrValuesPerRecord,
+            NbrOutputs,
             rnd);
+    }
+
+    protected Samples GetSamples(
+        int nbrTrainingSamples,
+        int nbrTestingSamples,
+        bool normalizeInputs)
+    {
+        return new Samples(
+            nbrTrainingSamples,
+            nbrTestingSamples,
+            normalizeInputs,
+            Records,
+            NbrValuesPerRecord,
+            NbrOutputs);
     }
 }

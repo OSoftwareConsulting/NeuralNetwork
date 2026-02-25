@@ -19,13 +19,13 @@
     }
   ],
   "FileSamplesGenerator": {
-    "FilePath": "succinctly.csv",
+    "CombinedFilePath": "succinctly.csv",
+    "TrainingFraction": 0.8,
     "Separator": ",",
     "SkipRows": 0,
     "SkipColumns": 0,
     "RandomizeSamples": false
   },
-  "TrainingFraction": 0.8,
   "MemoryFilePath": "succinctly.nnm",
   "UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches"
 }

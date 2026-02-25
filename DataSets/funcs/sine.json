@@ -22,6 +22,7 @@
   "FunctionSamplesGenerator": {
     "SamplesGeneratorFunction": "TestFuncsLib.MathSin",
     "NbrRecords": 1000,
+    "TrainingFraction": 0.8,
     "ValueRanges": [
       {
         "MinValue": 0.0,
@@ -29,7 +30,6 @@
       }
     ]
   },
-  "TrainingFraction": 0.8,
   "MemoryFilePath": "sine.nnm",
   "UserDefinedFunctions": "TestFuncsLib.AbsErrors"
 }

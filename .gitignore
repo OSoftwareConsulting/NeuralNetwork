@@ -6,6 +6,15 @@
 # Neural Network Memory files
 *.nnm
 
+# MNIST database
+*.idx3-ubyte
+*.idx1-ubyte
+mnist_train_data.csv
+mnist_test_data.csv
+
+# Python
+venv/
+
 # User-specific files
 *.suo
 *.user

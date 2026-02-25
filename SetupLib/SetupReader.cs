@@ -15,23 +15,38 @@ namespace SetupLib;
 
 public static class SetupReader
 {
+    private const bool defNormalizeInputs = false;
+    private const char defValuesSeparator = ',';
+    private const int defSkipRows = 0;
+    private const int defSkipCols = 0;
+    private const bool defRandomizeSamples = false;
+
     // Used to create training and testing samples from a file
     public class FileSamplesGeneratorDto
     {
-        // The samples file path specified relative to the test setup JSON file
-        public string FilePath { get; set; }
+        // The combined samples (training and testing) file path specified relative to the setup JSON file
+        public string CombinedFilePath { get; set; }
+
+        // A number between 0.0 and 1.0 to specify the fraction of the samples to use for training, and testing by implication
+        public double? TrainingFraction { get; set; }
+
+        // The training samples file path specified relative to the setup JSON file
+        public string TrainingFilePath { get; set; }
+
+        // The testing samples file path specified relative to the setup JSON file
+        public string TestingFilePath { get; set; }
 
         // The character that separates sample values (',' for CSV, etc)
-        public char Separator { get; set; }
+        public char? Separator { get; set; }
 
         // The number of first rows to skip in the samples file (e.g., for headers)
-        public int SkipRows { get; set; }
+        public int? SkipRows { get; set; }
 
         // The number of first columns to skip in each record (e.g., for dates)
-        public int SkipColumns { get; set; }
+        public int? SkipColumns { get; set; }
 
         // If true, the samples read in from the file are randomized in the training and testing sets, otherwise they are taken in the order in the file
-        public bool RandomizeSamples { get; set; }
+        public bool? RandomizeSamples { get; set; }
 
         // Perform the input normalization
         public bool? NormalizeInputs { get; set; }
@@ -54,6 +69,9 @@ public static class SetupReader
 
         // The number of records to generate
         public int NbrRecords { get; set; }
+
+        // A number between 0.0 and 1.0 to specify the fraction of the samples to use for training, and testing by implication
+        public double TrainingFraction { get; set; }
 
         // An array of min and max input values used to generate inputs to the Samples Generator Function
         public ValueRangeDto[] ValueRanges { get; set; }
@@ -119,45 +137,38 @@ public static class SetupReader
             throw new ArgumentNullException(nameof(setup));
         }
 
-        Utilities.LoadAssemblies(setup.AssemblyPaths, setupFilePath);
+        var baseDirPath = Path.GetDirectoryName(setupFilePath);
+
+        Utilities.LoadAssemblies(setup.AssemblyPaths, baseDirPath);
 
         Random rnd = setup.Seed.HasValue ? new Random(setup.Seed.Value) : new Random();
 
-        if (setup.FileSamplesGenerator != null && setup.FunctionSamplesGenerator != null)
+        int nbr_generators =
+            (setup.FileSamplesGenerator == null ? 0 : 1) +
+            (setup.FunctionSamplesGenerator == null ? 0 : 1);
+
+        if (nbr_generators != 1)
         {
-            throw new InvalidOperationException("Cannot specify both a File Samples Generator and a Function Samples Generator");
+            throw new InvalidOperationException("Must specify one and only one Samples Generator");
         }
 
-        Samples samples;
+        Samples samples = null;
 
         if (setup.FileSamplesGenerator != null)
         {
-            if (setup.FileSamplesGenerator.FilePath == null)
-            {
-                throw new InvalidOperationException("Must specify a File Path for the File Samples Generator");
-            }
-
-            string dataFilePath = Utilities.GetAbsoluteFilePath(setup.FileSamplesGenerator.FilePath, setupFilePath);
-
             samples = GetSamplesFromFile(
+                baseDirPath,
                 setup.FileSamplesGenerator,
-                dataFilePath,
                 setup.NbrOutputs,
-                trainingFraction: 0.0,
                 rnd);
         }
-        else if (setup.FunctionSamplesGenerator?.SamplesGeneratorFunction != null)
+
+        if (setup.FunctionSamplesGenerator?.SamplesGeneratorFunction != null)
         {
             samples = GetSamplesFromDataGenerator(
                 setup.FunctionSamplesGenerator,
                 setup.NbrOutputs,
-                trainingFraction: 0.0,
                 rnd);
-        }
-        // Must specify a Samples Generator
-        else
-        {
-            throw new InvalidOperationException("Must specify a Samples Generator");
         }
 
         if (string.IsNullOrEmpty(setup.MemoryFilePath))
@@ -165,7 +176,7 @@ public static class SetupReader
             throw new InvalidOperationException("Must specify a Memory File Path");
         }
 
-        var memoryFilePath = Utilities.GetAbsoluteFilePath(setup.MemoryFilePath, setupFilePath);
+        var memoryFilePath = Utilities.GetAbsoluteFilePath(setup.MemoryFilePath, baseDirPath);
 
         if (setup.UserDefinedFunctions == null)
         {
@@ -204,9 +215,6 @@ public static class SetupReader
         // Used to create training and testing samples by calling a function with random inputs between min & max values
         public FunctionSamplesGeneratorDto FunctionSamplesGenerator { get; set; }
 
-        // A number between 0.0 and 1.0 to specify the fraction of the samples to use for training, and testing by implication
-        public double TrainingFraction { get; set; }
-
         // Neural Network
 
         // Neuron Layer Configurations (must specify at least one)
@@ -240,26 +248,23 @@ public static class SetupReader
             throw new ArgumentNullException(nameof(setup));
         }
 
-        Utilities.LoadAssemblies(setup.AssemblyPaths, setupFilePath);
+        var baseDirPath = Path.GetDirectoryName(setupFilePath);
+
+        Utilities.LoadAssemblies(setup.AssemblyPaths, baseDirPath);
 
         Random rnd = setup.Seed.HasValue ? new Random(setup.Seed.Value) : new Random();
-
-        if (setup.TrainingFraction < 0.0 || setup.TrainingFraction > 1.0)
-        {
-            throw new InvalidOperationException("TrainingFraction must be between 0.0 and 1.0");
-        }
 
         if (setup.LayerConfigs == null || (setup.LayerConfigs.Length == 0))
         {
             throw new InvalidOperationException("Must specify Neuron Layer Configurations");
         }
 
-        var neuronLayerConfigs = new List<NeuralNetworkLib.NeuronLayerConfig>();
+        var neuronLayerConfigs = new List<NeuronLayerConfig>();
         foreach (var testSetupLayerConfig in setup.LayerConfigs)
         {
             var activationFunction = GetActivationFunctionInstance(testSetupLayerConfig.ActivationFunction);
 
-            neuronLayerConfigs.Add(new NeuralNetworkLib.NeuronLayerConfig(
+            neuronLayerConfigs.Add(new NeuronLayerConfig(
                 testSetupLayerConfig.NbrOutputs,
                 activationFunction,
                 testSetupLayerConfig.InitialWeightRange));
@@ -274,41 +279,32 @@ public static class SetupReader
 
         int nbrOutputs = neuronLayerConfigs[nbrLayers - 1].NbrOutputs;
 
-        if (setup.FileSamplesGenerator != null && setup.FunctionSamplesGenerator != null)
+        int nbr_generators =
+            (setup.FileSamplesGenerator == null ? 0 : 1) +
+            (setup.FunctionSamplesGenerator == null ? 0 : 1);
+
+        if (nbr_generators != 1)
         {
-            throw new InvalidOperationException("Cannot specify both a File Samples Generator and a Function Samples Generator");
+            throw new InvalidOperationException("Must specify one and only one Samples Generator");
         }
 
-        Samples samples;
+        Samples samples = null;
 
         if (setup.FileSamplesGenerator != null)
         {
-            if (setup.FileSamplesGenerator.FilePath == null)
-            {
-                throw new InvalidOperationException("Must specify a File Path for the File Samples Generator");
-            }
-
-            string dataFilePath = Utilities.GetAbsoluteFilePath(setup.FileSamplesGenerator.FilePath, setupFilePath);
-
             samples = GetSamplesFromFile(
+                baseDirPath,
                 setup.FileSamplesGenerator,
-                dataFilePath,
                 nbrOutputs,
-                setup.TrainingFraction,
                 rnd);
         }
-        else if (setup.FunctionSamplesGenerator?.SamplesGeneratorFunction != null)
+
+        if (setup.FunctionSamplesGenerator?.SamplesGeneratorFunction != null)
         {
             samples = GetSamplesFromDataGenerator(
                 setup.FunctionSamplesGenerator,
                 nbrOutputs,
-                setup.TrainingFraction,
                 rnd);
-        }
-        // Must specify a Samples Generator
-        else
-        {
-            throw new InvalidOperationException("Must specify a Samples Generator");
         }
 
         if (string.IsNullOrEmpty(setup.MemoryFilePath))
@@ -316,7 +312,7 @@ public static class SetupReader
             throw new InvalidOperationException("Must specify a Memory File Path");
         }
 
-        var memoryFilePath = Utilities.GetAbsoluteFilePath(setup.MemoryFilePath, setupFilePath);
+        var memoryFilePath = Utilities.GetAbsoluteFilePath(setup.MemoryFilePath, baseDirPath);
 
         if (setup.UserDefinedFunctions == null)
         {
@@ -380,9 +376,6 @@ public static class SetupReader
         // Used to create training and testing samples by calling a function with random inputs between min & max values
         public FunctionSamplesGeneratorDto FunctionSamplesGenerator { get; set; }
 
-        // A number between 0.0 and 1.0 to specify the fraction of the samples to use for training, and testing by implication
-        public double TrainingFraction { get; set; }
-
         // Neural Network
 
         // The number of neural network layers
@@ -440,7 +433,9 @@ public static class SetupReader
             throw new ArgumentNullException(nameof(setup));
         }
 
-        Utilities.LoadAssemblies(setup.AssemblyPaths, setupFilePath);
+        var baseDirPath = Path.GetDirectoryName(setupFilePath);
+
+        Utilities.LoadAssemblies(setup.AssemblyPaths, baseDirPath);
 
         if (setup.LayerConfig == null)
         {
@@ -453,11 +448,6 @@ public static class SetupReader
         }
 
         Random rnd = setup.Seed.HasValue ? new Random(setup.Seed.Value) : new Random();
-
-        if (setup.TrainingFraction < 0.0 || setup.TrainingFraction > 1.0)
-        {
-            throw new InvalidOperationException("TrainingFraction must be between 0.0 and 1.0");
-        }
 
         var activationFunctions = new List<IActivationFunction>();
         foreach (var activationFunctionAssemblyPath in setup.LayerConfig.ActivationFunction)
@@ -482,41 +472,32 @@ public static class SetupReader
             activationFunctions.ToArray(),
             setup.LayerConfig.InitialWeightRange);
 
-        if (setup.FileSamplesGenerator != null && setup.FunctionSamplesGenerator != null)
+        int nbr_generators =
+            (setup.FileSamplesGenerator == null ? 0 : 1) +
+            (setup.FunctionSamplesGenerator == null ? 0 : 1);
+
+        if (nbr_generators != 1)
         {
-            throw new InvalidOperationException("Cannot specify both a File Samples Generator and a Function Samples Generator");
+            throw new InvalidOperationException("Must specify one and only one Samples Generator");
         }
 
-        Samples samples;
+        Samples samples = null;
 
         if (setup.FileSamplesGenerator != null)
         {
-            if (setup.FileSamplesGenerator.FilePath == null)
-            {
-                throw new InvalidOperationException("Must specify a File Path for the File Samples Generator");
-            }
-
-            string dataFilePath = Utilities.GetAbsoluteFilePath(setup.FileSamplesGenerator.FilePath, setupFilePath);
-
             samples = GetSamplesFromFile(
+                baseDirPath,
                 setup.FileSamplesGenerator,
-                dataFilePath,
                 setup.NbrOutputs,
-                setup.TrainingFraction,
                 rnd);
         }
-        else if (setup.FunctionSamplesGenerator?.SamplesGeneratorFunction != null)
+
+        if (setup.FunctionSamplesGenerator?.SamplesGeneratorFunction != null)
         {
             samples = GetSamplesFromDataGenerator(
                 setup.FunctionSamplesGenerator,
                 setup.NbrOutputs,
-                setup.TrainingFraction,
                 rnd);
-        }
-        // Must specify a Samples Generator
-        else
-        {
-            throw new InvalidOperationException("Must specify a Samples Generator");
         }
 
         if (setup.OutputLayerActivationFunction == null)
@@ -531,7 +512,7 @@ public static class SetupReader
             throw new InvalidOperationException("Must specify a Memory File Path");
         }
 
-        var memoryFilePath = Utilities.GetAbsoluteFilePath(setup.MemoryFilePath, setupFilePath);
+        var memoryFilePath = Utilities.GetAbsoluteFilePath(setup.MemoryFilePath, baseDirPath);
 
         if (setup.UserDefinedFunctions == null)
         {
@@ -565,27 +546,62 @@ public static class SetupReader
     }
 
     private static Samples GetSamplesFromFile(
+        string baseDirPath,
         FileSamplesGeneratorDto fileSamplesGenerator,
-        string dataFilePath,
         int nbrOutputs,
-        double trainingFraction,
         Random rnd)
     {
-        return FileSamplesGenerator.GetSamples(
-            nbrOutputs,
-            trainingFraction,
-            fileSamplesGenerator.NormalizeInputs ?? false,
-            dataFilePath,
-            fileSamplesGenerator.Separator,
-            fileSamplesGenerator.SkipRows,
-            fileSamplesGenerator.SkipColumns,
-            fileSamplesGenerator.RandomizeSamples ? rnd : null);
+        if (!string.IsNullOrEmpty(fileSamplesGenerator.CombinedFilePath))
+        {
+            string dataFilePath = Utilities.GetAbsoluteFilePath(fileSamplesGenerator.CombinedFilePath, baseDirPath);
+
+            if (!fileSamplesGenerator.TrainingFraction.HasValue)
+            {
+                throw new InvalidOperationException("Must specify a training fraction when using a combined samples file");
+            }
+
+            return FileSamplesGenerator.GetSamples(
+                dataFilePath,
+                nbrOutputs,
+                fileSamplesGenerator.TrainingFraction.Value,
+                fileSamplesGenerator.NormalizeInputs.GetValueOrDefault(defNormalizeInputs),
+                fileSamplesGenerator.Separator.GetValueOrDefault(defValuesSeparator),
+                fileSamplesGenerator.SkipRows.GetValueOrDefault(defSkipRows),
+                fileSamplesGenerator.SkipColumns.GetValueOrDefault(defSkipCols),
+                fileSamplesGenerator.RandomizeSamples.GetValueOrDefault(defRandomizeSamples) ? rnd : null);
+        }
+
+        if (!string.IsNullOrEmpty(fileSamplesGenerator.TrainingFilePath) && !string.IsNullOrEmpty(fileSamplesGenerator.TestingFilePath))
+        {
+            if (fileSamplesGenerator.TrainingFraction.HasValue)
+            {
+                throw new InvalidOperationException("Must not specify a training fraction when using separate training and testing samples files");
+            }
+
+            if (fileSamplesGenerator.RandomizeSamples.HasValue && fileSamplesGenerator.RandomizeSamples.Value)
+            {
+                throw new InvalidOperationException("Must not specify to randomize samples when using separate training and testing samples files");
+            }
+
+            string trainingDataFilePath = Utilities.GetAbsoluteFilePath(fileSamplesGenerator.TrainingFilePath, baseDirPath);
+            string testingDataFilePath = Utilities.GetAbsoluteFilePath(fileSamplesGenerator.TestingFilePath, baseDirPath);
+
+            return FileSamplesGenerator.GetSamples(
+                trainingDataFilePath,
+                testingDataFilePath,
+                nbrOutputs,
+                fileSamplesGenerator.NormalizeInputs.GetValueOrDefault(defNormalizeInputs),
+                fileSamplesGenerator.Separator.GetValueOrDefault(defValuesSeparator),
+                fileSamplesGenerator.SkipRows.GetValueOrDefault(defSkipRows),
+                fileSamplesGenerator.SkipColumns.GetValueOrDefault(defSkipCols));
+        }
+
+        throw new InvalidOperationException("Must specify either a Combined File Path or both Training and Testing File Paths for the File Samples Generator");
     }
 
     private static Samples GetSamplesFromDataGenerator(
         FunctionSamplesGeneratorDto functionSamplesGenerator,
         int nbrOutputs,
-        double trainingFraction,
         Random rnd)
     {
         ISamplesGeneratorFunction dataGeneratorFunction = (ISamplesGeneratorFunction)Utilities.GetInstance(functionSamplesGenerator.SamplesGeneratorFunction);
@@ -610,7 +626,7 @@ public static class SetupReader
 
         Samples samples = FunctionSamplesGenerator.GetSamples(
             nbrOutputs,
-            trainingFraction,
+            functionSamplesGenerator.TrainingFraction,
             functionSamplesGenerator.NormalizeInputs ?? false,
             dataGeneratorFunction,
             functionSamplesGenerator.NbrRecords,

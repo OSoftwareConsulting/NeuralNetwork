@@ -8,25 +8,20 @@
   "TrainingMomentum": 0.01,
   "LayerConfigs": [
     {
-      "NbrOutputs": 6,
-      "ActivationFunction": "NeuralNetworkLib.ActivationFunctions.TanhActivationFunction",
+      "NbrOutputs": 256,
+      "ActivationFunction": "NeuralNetworkLib.ActivationFunctions.ReLUActivationFunction",
       "InitialWeightRange": 0.01
     },
     {
-      "NbrOutputs": 3,
+      "NbrOutputs": 10,
       "ActivationFunction": "NeuralNetworkLib.ActivationFunctions.SoftMaxActivationFunction",
       "InitialWeightRange": 0.01
     }
   ],
   "FileSamplesGenerator": {
-    "CombinedFilePath": "wine.csv",
-    "TrainingFraction": 0.8,
-    "Separator": ",",
-    "SkipRows": 0,
-    "SkipColumns": 0,
-    "RandomizeSamples": true,
-    "NormalizeInputs": true
+    "TrainingFilePath": "mnist_train_data.csv",
+    "TestingFilePath": "mnist_test_data.csv"
   },
-  "MemoryFilePath": "wine.nnm",
+  "MemoryFilePath": "mnist.nnm",
   "UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches"
 }

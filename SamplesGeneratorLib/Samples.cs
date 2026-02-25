@@ -14,18 +14,20 @@ namespace SamplesGeneratorLib;
 public class Samples
 {
     // Training Sample Set
-    public double[][] TrainingInputs { get; }
-    public double[][] TrainingTargets { get; }
+    public double[][] TrainingInputs { get; private set; }
+    public double[][] TrainingTargets { get; private set; }
 
     // Testing Sample Set
-    public double[][] TestingInputs { get; }
-    public double[][] TestingTargets { get; }
+    public double[][] TestingInputs { get; private set; }
+    public double[][] TestingTargets { get; private set; }
 
     public int NbrOutputs { get; }
     public int NbrInputs { get; }
 
-    // Constructor that generates the training and testing samples based on the specified training fraction from the records
-    // If a random number generator is specified, the order of the records is randomized before separating the records into the training and testing sample sets
+    /// <summary>
+    /// Constructor that generates the training and testing samples based on the specified training fraction from the records
+    /// If a random number generator is specified, the order of the records is randomized before separating the records into the training and testing sample sets
+    /// </summary>
     internal Samples(
         double trainingFraction,
         bool normalizeInputs,
@@ -38,6 +40,7 @@ public class Samples
         {
             throw new ArgumentException($"The specified Training Fraction {trainingFraction} is invalid");
         }
+
         if ((nbrOutputs < 1) || (nbrOutputs >= nbrValuesPerRecord))
         {
             throw new ArgumentException($"The specified Number of Outputs {nbrOutputs} is invalid");
@@ -49,6 +52,60 @@ public class Samples
         int nbrRecords = records.Count();
         int nbrTrainingSamples = (int)(nbrRecords * trainingFraction);
         int nbrTestingSamples = nbrRecords - nbrTrainingSamples;
+
+        CopySamples(
+            nbrTrainingSamples,
+            nbrTestingSamples,
+            normalizeInputs,
+            records,
+            rnd);
+    }
+
+    /// <summary>
+    /// Constructor that generates the training and testing samples based on the specified number of training and testing samples from the records
+    /// The samples are taken as they occur in the records (i.e., no randomization of the order of the records)
+    internal Samples(
+        int nbrTrainingSamples,
+        int nbrTestingSamples,
+        bool normalizeInputs,
+        double[][] records,
+        int nbrValuesPerRecord,
+        int nbrOutputs)
+    {
+        int nbrRecords = records.Count();
+
+        if ((nbrTrainingSamples <= 0) || (nbrTestingSamples <= 0) || ((nbrTrainingSamples + nbrTestingSamples) != nbrRecords))
+        {
+            throw new ArgumentException($"The specified number of training samples {nbrTrainingSamples} and/or number of testing samples {nbrTestingSamples} is invalid");
+        }
+
+        if ((nbrOutputs < 1) || (nbrOutputs >= nbrValuesPerRecord))
+        {
+            throw new ArgumentException($"The specified Number of Outputs {nbrOutputs} is invalid");
+        }
+
+        NbrOutputs = nbrOutputs;
+        NbrInputs = nbrValuesPerRecord - nbrOutputs;
+
+        CopySamples(
+            nbrTrainingSamples,
+            nbrTestingSamples,
+            normalizeInputs,
+            records,
+            rnd: null);
+    }
+
+    /// <summary>
+    /// Helper method to perform the copying of the samples
+    /// </summary>
+    private void CopySamples(
+        int nbrTrainingSamples,
+        int nbrTestingSamples,
+        bool normalizeInputs,
+        double[][] records,
+        Random rnd)
+    {
+        int nbrRecords = records.Count();
 
         TrainingInputs = new double[nbrTrainingSamples][];
         TrainingTargets = new double[nbrTrainingSamples][];

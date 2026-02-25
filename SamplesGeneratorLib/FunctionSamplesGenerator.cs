@@ -44,11 +44,12 @@ public class FunctionSamplesGenerator : SamplesGenerator
         base(
             nbrOutputs: nbrOutputs)
     {
-        nbrValuesPerRecord = nbrInputs + nbrOutputs;
-        records = new double[nbrRecords][];
+        NbrValuesPerRecord = nbrInputs + nbrOutputs;
+
+        Records = new double[nbrRecords][];
         for (int n = 0; n < nbrRecords; n++)
         {
-            records[n] = new double[nbrValuesPerRecord];
+            Records[n] = new double[NbrValuesPerRecord];
         }
     }
 
@@ -85,27 +86,27 @@ public class FunctionSamplesGenerator : SamplesGenerator
         ValueRange[] valueRanges,
         Random rnd)
     {
-        int nbrRecords = records.GetLength(0);
+        int nbrRecords = Records.GetLength(0);
         int nbrInputs = valueRanges.Length;
 
         double[] inputs = new double[nbrInputs];
-        double[] outputs = new double[nbrOutputs];
+        double[] outputs = new double[NbrOutputs];
 
         for (int n = 0; n < nbrRecords; n++)
         {
             // Randomize the inputs based on the specified input value ranges
-            randomizeInputs(valueRanges, inputs, rnd);
+            RandomizeInputs(valueRanges, inputs, rnd);
 
             // Call the user-define samples generator function (ISamplesGeneratorFunction) to compute the functions' output values
             dataGeneratorFunction.Compute(inputs, outputs);
 
             // Copy the inputs and outputs to the record
-            copyInputsAndOutputs(records[n], inputs, outputs);
+            CopyInputsAndOutputs(Records[n], inputs, outputs);
         }
     }
 
     // Randomizes the inputs based on the specified input value ranges
-    private void randomizeInputs(
+    private void RandomizeInputs(
         ValueRange[] valueRanges,
         double[] inputs,
         Random rnd)
@@ -118,7 +119,7 @@ public class FunctionSamplesGenerator : SamplesGenerator
     }
 
     // Copies the input and output arrays to the record array
-    private void copyInputsAndOutputs(
+    private void CopyInputsAndOutputs(
         double[] record,
         double[] inputs,
         double[] outputs)
@@ -129,7 +130,7 @@ public class FunctionSamplesGenerator : SamplesGenerator
         {
             record[n] = inputs[i];
         }
-        for (int i = 0; i < nbrOutputs; i++, n++)
+        for (int i = 0; i < NbrOutputs; i++, n++)
         {
             record[n] = outputs[i];
         }

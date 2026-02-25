@@ -19,14 +19,14 @@
     }
   ],
   "FileSamplesGenerator": {
-    "FilePath": "iris.csv",
+    "CombinedFilePath": "iris.csv",
+    "TrainingFraction": 0.8,
     "Separator": ",",
     "SkipRows": 0,
     "SkipColumns": 0,
     "RandomizeSamples": true,
     "NormalizeInputs": true
   },
-  "TrainingFraction": 0.8,
   "MemoryFilePath": "iris.nnm",
   "UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches"
 }

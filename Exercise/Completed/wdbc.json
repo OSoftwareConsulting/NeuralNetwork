@@ -19,14 +19,14 @@
     }
   ],
   "FileSamplesGenerator": {
-    "FilePath": "wdbc.csv",
+    "CombinedFilePath": "wdbc.csv",
+    "TrainingFraction": 0.8,
     "Separator": ",",
     "SkipRows": 0,
     "SkipColumns": 0,
     "RandomizeSamples": true,
     "NormalizeInputs": true
   },
-  "TrainingFraction": 0.8,
   "MemoryFilePath": "wdbc.nnm",
   "UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches"
 }

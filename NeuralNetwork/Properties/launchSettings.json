@@ -2,7 +2,7 @@
   "profiles": {
     "NeuralNetwork": {
       "commandName": "Project",
-      "commandLineArgs": "--mode tt --file C:\\ov\\NeuralNetwork\\DataSets\\wine\\wine.json"
+      "commandLineArgs": "--mode tt --file C:\\ov\\NeuralNetwork\\DataSets\\mnist\\mnist.json"
     }
   }
 }

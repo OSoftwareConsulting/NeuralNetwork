@@ -163,13 +163,9 @@ public static class Utilities
         throw new InvalidOperationException($"Type {strFullyQualifiedName} was not found.");
     }
 
-    public static string GetAbsoluteFilePath(string filePath, string baseFilePath) => Path.IsPathRooted(filePath) ?
-        filePath :
-        Path.Combine(
-            Path.GetDirectoryName(baseFilePath) ?? throw new InvalidOperationException(),
-            filePath);
+    public static string GetAbsoluteFilePath(string filePath, string baseDirPath) => Path.IsPathRooted(filePath) ? filePath : Path.Combine(baseDirPath, filePath);
 
-    public static void LoadAssemblies(string[]? assemblyPaths, string setupFilePath)
+    public static void LoadAssemblies(string[] assemblyPaths, string baseDirPath)
     {
         if (assemblyPaths == null) return;
 
@@ -180,7 +176,7 @@ public static class Utilities
                 throw new InvalidOperationException("AssemblyPaths contains an empty path.");
             }
 
-            var absolutePath = GetAbsoluteFilePath(rawPath, setupFilePath);
+            var absolutePath = GetAbsoluteFilePath(rawPath, baseDirPath);
 
             if (!File.Exists(absolutePath))
             {

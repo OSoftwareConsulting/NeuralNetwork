@@ -1,0 +1,32 @@
+{
+	"Debug": false,
+	"AssemblyPaths": [
+		"..\\..\\TestFuncsLib\\bin\\Debug\\net10.0\\TestFuncsLib.dll"
+	],
+	"NbrEpochs": 1000,
+	"TrainingRate": [ 0.005, 0.01, 0.025, 0.05 ],
+	"TrainingMomentum": [ 0.005, 0.01, 0.025 ],
+	"NbrOutputs": 10,
+	"NbrLayers": [ 2, 3 ],
+	"LayerConfig": {
+		"NbrOutputs": [ 128, 256 ],
+		"ActivationFunction": [
+			"NeuralNetworkLib.ActivationFunctions.TanhActivationFunction",
+			"NeuralNetworkLib.ActivationFunctions.SigmoidActivationFunction",
+			"NeuralNetworkLib.ActivationFunctions.ReLUActivationFunction"
+		],
+		"InitialWeightRange": [ 0.01, 0.1 ]
+	},
+	"OutputLayerActivationFunction": "NeuralNetworkLib.ActivationFunctions.SoftMaxActivationFunction",
+	"FileSamplesGenerator": {
+		"TrainingFilePath": "mnist_train_data.csv",
+		"TestingFilePath": "mnist_test_data.csv"
+	},
+	"MemoryFilePath": "mnist.nnm",
+	"UserDefinedFunctions": "TestFuncsLib.IndexOfMaxMatches",
+	"PopulationSize": 10,
+	"SelectionPercentage": 0.2,
+	"MatingPercentage": 0.5,
+	"MutationProbability": 0.1,
+	"FitnessLowerBetter": false
+}
