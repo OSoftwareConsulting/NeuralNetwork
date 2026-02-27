@@ -139,18 +139,18 @@ internal static class SetupValidatorsTests
             () => SetupValidators.ValidateGANeuronLayerConfig(
                 new GANeuronLayerConfigDto
                 {
-                    NbrOutputs = new[] { 1, 2 },
+                    NbrOutputs = [1, 2],
                     ActivationFunction = null,
-                    InitialWeightRange = new[] { 0.1, 0.5 }
+                    InitialWeightRange = [0.1, 0.5]
                 }),
             "Missing activation functions should be rejected");
 
         SetupValidators.ValidateGANeuronLayerConfig(
             new GANeuronLayerConfigDto
             {
-                NbrOutputs = new[] { 1, 2 },
-                ActivationFunction = new[] { "A", "B" },
-                InitialWeightRange = new[] { 0.1, 0.5 }
+                NbrOutputs = [1, 2],
+                ActivationFunction = ["A", "B"],
+                InitialWeightRange = [0.1, 0.5]
             });
     }
 

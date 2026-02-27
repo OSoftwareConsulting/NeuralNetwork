@@ -1,15 +1,21 @@
 using SamplesGeneratorLib;
-using UtilitiesLib;
 
 namespace SetupLib;
 
 internal sealed class FileSamplesGeneratorStrategy : ISamplesGeneratorStrategy
 {
+    private readonly IPathResolver _pathResolver;
+
     private const bool DefNormalizeInputs = false;
     private const char DefValuesSeparator = ',';
     private const int DefSkipRows = 0;
     private const int DefSkipCols = 0;
     private const bool DefRandomizeSamples = false;
+
+    public FileSamplesGeneratorStrategy(IPathResolver pathResolver)
+    {
+        _pathResolver = pathResolver ?? throw new ArgumentNullException(nameof(pathResolver));
+    }
 
     public bool CanHandle(FileSamplesGeneratorDto fileSamplesGenerator, FunctionSamplesGeneratorDto functionSamplesGenerator)
     {
@@ -25,7 +31,7 @@ internal sealed class FileSamplesGeneratorStrategy : ISamplesGeneratorStrategy
     {
         if (!string.IsNullOrEmpty(fileSamplesGenerator.CombinedFilePath))
         {
-            string dataFilePath = Utilities.GetAbsoluteFilePath(fileSamplesGenerator.CombinedFilePath, baseDirPath);
+            string dataFilePath = _pathResolver.GetAbsoluteFilePath(fileSamplesGenerator.CombinedFilePath, baseDirPath);
 
             if (!fileSamplesGenerator.TrainingFraction.HasValue)
             {
@@ -56,8 +62,8 @@ internal sealed class FileSamplesGeneratorStrategy : ISamplesGeneratorStrategy
                 throw new InvalidOperationException("Must not specify to randomize samples when using separate training and testing samples files");
             }
 
-            string trainingDataFilePath = Utilities.GetAbsoluteFilePath(fileSamplesGenerator.TrainingFilePath, baseDirPath);
-            string testingDataFilePath = Utilities.GetAbsoluteFilePath(fileSamplesGenerator.TestingFilePath, baseDirPath);
+            string trainingDataFilePath = _pathResolver.GetAbsoluteFilePath(fileSamplesGenerator.TrainingFilePath, baseDirPath);
+            string testingDataFilePath = _pathResolver.GetAbsoluteFilePath(fileSamplesGenerator.TestingFilePath, baseDirPath);
 
             return FileSamplesGenerator.GetSamples(
                 trainingDataFilePath,

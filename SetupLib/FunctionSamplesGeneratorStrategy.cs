@@ -1,10 +1,16 @@
 using SamplesGeneratorLib;
-using UtilitiesLib;
 
 namespace SetupLib;
 
 internal sealed class FunctionSamplesGeneratorStrategy : ISamplesGeneratorStrategy
 {
+    private readonly ITypeActivator _typeActivator;
+
+    public FunctionSamplesGeneratorStrategy(ITypeActivator typeActivator)
+    {
+        _typeActivator = typeActivator ?? throw new ArgumentNullException(nameof(typeActivator));
+    }
+
     public bool CanHandle(FileSamplesGeneratorDto fileSamplesGenerator, FunctionSamplesGeneratorDto functionSamplesGenerator)
     {
         return functionSamplesGenerator?.SamplesGeneratorFunction != null;
@@ -18,7 +24,7 @@ internal sealed class FunctionSamplesGeneratorStrategy : ISamplesGeneratorStrate
         Random rnd)
     {
         ISamplesGeneratorFunction dataGeneratorFunction =
-            (ISamplesGeneratorFunction)Utilities.GetInstance(functionSamplesGenerator.SamplesGeneratorFunction);
+            (ISamplesGeneratorFunction)_typeActivator.GetInstance(functionSamplesGenerator.SamplesGeneratorFunction);
         if (dataGeneratorFunction == null)
         {
             throw new InvalidOperationException(

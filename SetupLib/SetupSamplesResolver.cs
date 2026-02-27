@@ -7,10 +7,15 @@ internal sealed class SetupSamplesResolver : ISamplesFactory
     private readonly ISamplesGeneratorStrategy[] _strategies;
 
     public SetupSamplesResolver()
+        : this(new UtilitiesTypeActivator(), new UtilitiesPathResolver())
+    {
+    }
+
+    public SetupSamplesResolver(ITypeActivator typeActivator, IPathResolver pathResolver)
         : this(
         [
-            new FileSamplesGeneratorStrategy(),
-            new FunctionSamplesGeneratorStrategy()
+            new FileSamplesGeneratorStrategy(pathResolver),
+            new FunctionSamplesGeneratorStrategy(typeActivator)
         ])
     {
     }
