@@ -14,6 +14,8 @@ namespace SetupLib;
 
 public static class SetupLoader
 {
+    private static readonly ISamplesFactory SamplesFactory = new SetupSamplesResolver();
+
     public static NeuralNetworkTestSetup GetNeuralNetworkTestSetup(string setupFilePath)
     {
         var setup = JsonConvert.DeserializeObject<NeuralNetworkTestSetupDto>(File.ReadAllText(setupFilePath));
@@ -28,7 +30,7 @@ public static class SetupLoader
 
         Random rnd = setup.Seed.HasValue ? new Random(setup.Seed.Value) : new Random();
 
-        var samples = SetupSamplesFactory.CreateSamples(
+        var samples = SamplesFactory.CreateSamples(
             baseDirPath,
             setup.FileSamplesGenerator,
             setup.FunctionSamplesGenerator,
@@ -87,7 +89,7 @@ public static class SetupLoader
 
         int nbrOutputs = neuronLayerConfigs[nbrLayers - 1].NbrOutputs;
 
-        var samples = SetupSamplesFactory.CreateSamples(
+        var samples = SamplesFactory.CreateSamples(
             baseDirPath,
             setup.FileSamplesGenerator,
             setup.FunctionSamplesGenerator,
@@ -145,7 +147,7 @@ public static class SetupLoader
             activationFunctions.ToArray(),
             setup.LayerConfig.InitialWeightRange);
 
-        var samples = SetupSamplesFactory.CreateSamples(
+        var samples = SamplesFactory.CreateSamples(
             baseDirPath,
             setup.FileSamplesGenerator,
             setup.FunctionSamplesGenerator,

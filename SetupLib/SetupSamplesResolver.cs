@@ -7,15 +7,15 @@ internal sealed class SetupSamplesResolver : ISamplesFactory
     private readonly ISamplesGeneratorStrategy[] _strategies;
 
     public SetupSamplesResolver()
-        : this(new ISamplesGeneratorStrategy[]
-        {
+        : this(
+        [
             new FileSamplesGeneratorStrategy(),
             new FunctionSamplesGeneratorStrategy()
-        })
+        ])
     {
     }
 
-    public SetupSamplesResolver(ISamplesGeneratorStrategy[] strategies)
+    private SetupSamplesResolver(ISamplesGeneratorStrategy[] strategies)
     {
         _strategies = strategies ?? throw new ArgumentNullException(nameof(strategies));
     }
