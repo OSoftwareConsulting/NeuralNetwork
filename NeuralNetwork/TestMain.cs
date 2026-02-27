@@ -14,7 +14,7 @@ public static class TestMain
 {
     public static void Main(string filePath)
     {
-        var setup = SetupReader.GetNeuralNetworkTestSetup(filePath);
+        var setup = SetupLoader.GetNeuralNetworkTestSetup(filePath);
 
         var neuralNetwork = NeuralNetwork.Load(
             setup.MemoryFilePath,

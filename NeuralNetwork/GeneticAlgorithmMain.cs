@@ -296,7 +296,7 @@ public static class GeneticAlgorithmMain
 {
     public static void Main(string filePath)
     {
-        var setup = SetupReader.GetGeneticAlgorithmSetup(filePath);
+        var setup = SetupLoader.GetGeneticAlgorithmSetup(filePath);
 
         NeuralNetworkSettingGenerator.Setup = setup;
 

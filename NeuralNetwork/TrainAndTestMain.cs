@@ -14,7 +14,7 @@ public static class TrainAndTestMain
 {
     public static void Main(string filePath)
     {
-        var setup = SetupReader.GetNeuralNetworkTrainAndTestSetup(filePath);
+        var setup = SetupLoader.GetNeuralNetworkTrainAndTestSetup(filePath);
 
         var neuralNetwork = new NeuralNetwork(
             setup.Samples.NbrInputs,
