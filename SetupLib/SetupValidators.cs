@@ -2,20 +2,6 @@ namespace SetupLib;
 
 internal static class SetupValidators
 {
-    public static void ValidateSingleSamplesGenerator(
-        FileSamplesGeneratorDto fileSamplesGenerator,
-        FunctionSamplesGeneratorDto functionSamplesGenerator)
-    {
-        int nbrGenerators =
-            (fileSamplesGenerator == null ? 0 : 1) +
-            (functionSamplesGenerator == null ? 0 : 1);
-
-        if (nbrGenerators != 1)
-        {
-            throw new InvalidOperationException("Must specify one and only one Samples Generator");
-        }
-    }
-
     public static void ValidateLayerConfigs(NeuronLayerConfigDto[] layerConfigs)
     {
         if (layerConfigs == null || layerConfigs.Length == 0)

@@ -32,7 +32,7 @@ internal sealed class SetupSamplesResolver : ISamplesFactory
         int nbrOutputs,
         Random rnd)
     {
-        SetupValidators.ValidateSingleSamplesGenerator(fileSamplesGenerator, functionSamplesGenerator);
+        ValidateSingleSamplesGenerator(fileSamplesGenerator, functionSamplesGenerator);
 
         foreach (var strategy in _strategies)
         {
@@ -43,5 +43,19 @@ internal sealed class SetupSamplesResolver : ISamplesFactory
         }
 
         throw new InvalidOperationException("Must specify one and only one Samples Generator");
+    }
+
+    private static void ValidateSingleSamplesGenerator(
+        FileSamplesGeneratorDto fileSamplesGenerator,
+        FunctionSamplesGeneratorDto functionSamplesGenerator)
+    {
+        int nbrGenerators =
+            (fileSamplesGenerator == null ? 0 : 1) +
+            (functionSamplesGenerator == null ? 0 : 1);
+
+        if (nbrGenerators != 1)
+        {
+            throw new InvalidOperationException("Must specify one and only one Samples Generator");
+        }
     }
 }

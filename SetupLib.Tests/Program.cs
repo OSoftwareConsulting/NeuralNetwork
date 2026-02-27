@@ -9,13 +9,12 @@ internal static class Program
     {
         var tests = new (string Name, Action Test)[]
         {
-            ("ValidateSingleSamplesGenerator rejects invalid combinations", SetupValidatorsTests.ValidateSingleSamplesGeneratorRejectsInvalidCombinations),
-            ("ValidateSingleSamplesGenerator accepts one generator", SetupValidatorsTests.ValidateSingleSamplesGeneratorAcceptsOneGenerator),
             ("ValidateLayerConfigs checks null and empty", SetupValidatorsTests.ValidateLayerConfigsChecksNullAndEmpty),
             ("ValidateGANeuronLayerConfig checks required fields", SetupValidatorsTests.ValidateGANeuronLayerConfigChecksRequiredFields),
             ("ValidateMemoryFilePath checks null and empty", SetupValidatorsTests.ValidateMemoryFilePathChecksNullAndEmpty),
             ("ValidateUserDefinedFunctions checks null only", SetupValidatorsTests.ValidateUserDefinedFunctionsChecksNullOnly),
             ("ValidateNbrEpochs checks positive values", SetupValidatorsTests.ValidateNbrEpochsChecksPositiveValues),
+            ("CreateSamples rejects missing generator definitions", SetupSamplesResolverTests.CreateSamplesRejectsMissingGeneratorDefinitions),
             ("CreateSamples from combined file uses expected split", SetupSamplesResolverTests.CreateSamplesFromCombinedFileUsesExpectedSplit),
             ("CreateSamples rejects missing training fraction for combined file", SetupSamplesResolverTests.CreateSamplesRejectsMissingTrainingFractionForCombinedFile),
             ("CreateSamples rejects randomize with separate files", SetupSamplesResolverTests.CreateSamplesRejectsRandomizeWithSeparateFiles),
@@ -94,28 +93,6 @@ internal static class TestAssert
 
 internal static class SetupValidatorsTests
 {
-    public static void ValidateSingleSamplesGeneratorRejectsInvalidCombinations()
-    {
-        TestAssert.Throws<InvalidOperationException>(
-            () => SetupValidators.ValidateSingleSamplesGenerator(null, null),
-            "Both null should be rejected");
-
-        var fileDto = new FileSamplesGeneratorDto();
-        var fnDto = new FunctionSamplesGeneratorDto();
-        TestAssert.Throws<InvalidOperationException>(
-            () => SetupValidators.ValidateSingleSamplesGenerator(fileDto, fnDto),
-            "Both non-null should be rejected");
-    }
-
-    public static void ValidateSingleSamplesGeneratorAcceptsOneGenerator()
-    {
-        var fileDto = new FileSamplesGeneratorDto();
-        SetupValidators.ValidateSingleSamplesGenerator(fileDto, null);
-
-        var fnDto = new FunctionSamplesGeneratorDto();
-        SetupValidators.ValidateSingleSamplesGenerator(null, fnDto);
-    }
-
     public static void ValidateLayerConfigsChecksNullAndEmpty()
     {
         TestAssert.Throws<InvalidOperationException>(
@@ -193,6 +170,13 @@ internal static class SetupValidatorsTests
 internal static class SetupSamplesResolverTests
 {
     private static readonly ISamplesFactory SamplesFactory = new SetupSamplesResolver();
+
+    public static void CreateSamplesRejectsMissingGeneratorDefinitions()
+    {
+        TestAssert.Throws<InvalidOperationException>(
+            () => SamplesFactory.CreateSamples(Environment.CurrentDirectory, null, null, nbrOutputs: 1, rnd: new Random(1)),
+            "Missing generators should be rejected");
+    }
 
     public static void CreateSamplesFromCombinedFileUsesExpectedSplit()
     {
