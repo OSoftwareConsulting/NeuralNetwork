@@ -16,12 +16,13 @@ internal static class Program
             ("ValidateMemoryFilePath checks null and empty", SetupValidatorsTests.ValidateMemoryFilePathChecksNullAndEmpty),
             ("ValidateUserDefinedFunctions checks null only", SetupValidatorsTests.ValidateUserDefinedFunctionsChecksNullOnly),
             ("ValidateNbrEpochs checks positive values", SetupValidatorsTests.ValidateNbrEpochsChecksPositiveValues),
-            ("CreateSamples from combined file uses expected split", SetupSamplesFactoryTests.CreateSamplesFromCombinedFileUsesExpectedSplit),
-            ("CreateSamples rejects missing training fraction for combined file", SetupSamplesFactoryTests.CreateSamplesRejectsMissingTrainingFractionForCombinedFile),
-            ("CreateSamples rejects randomize with separate files", SetupSamplesFactoryTests.CreateSamplesRejectsRandomizeWithSeparateFiles),
-            ("CreateSamples from function generator returns valid samples", SetupSamplesFactoryTests.CreateSamplesFromFunctionGeneratorReturnsValidSamples),
-            ("CreateSamples rejects invalid function generator ranges", SetupSamplesFactoryTests.CreateSamplesRejectsInvalidFunctionGeneratorRanges),
-            ("CreateSamples rejects multiple generator definitions", SetupSamplesFactoryTests.CreateSamplesRejectsMultipleGeneratorDefinitions)
+            ("CreateSamples from combined file uses expected split", SetupSamplesResolverTests.CreateSamplesFromCombinedFileUsesExpectedSplit),
+            ("CreateSamples rejects missing training fraction for combined file", SetupSamplesResolverTests.CreateSamplesRejectsMissingTrainingFractionForCombinedFile),
+            ("CreateSamples rejects randomize with separate files", SetupSamplesResolverTests.CreateSamplesRejectsRandomizeWithSeparateFiles),
+            ("CreateSamples from function generator returns valid samples", SetupSamplesResolverTests.CreateSamplesFromFunctionGeneratorReturnsValidSamples),
+            ("CreateSamples rejects invalid function generator ranges", SetupSamplesResolverTests.CreateSamplesRejectsInvalidFunctionGeneratorRanges),
+            ("CreateSamples rejects multiple generator definitions", SetupSamplesResolverTests.CreateSamplesRejectsMultipleGeneratorDefinitions),
+            ("Static SetupSamplesFactory wrapper delegates to resolver", SetupSamplesResolverTests.StaticWrapperDelegatesToResolver)
         };
 
         int failures = 0;
@@ -189,8 +190,10 @@ internal static class SetupValidatorsTests
     }
 }
 
-internal static class SetupSamplesFactoryTests
+internal static class SetupSamplesResolverTests
 {
+    private static readonly ISamplesFactory SamplesFactory = new SetupSamplesResolver();
+
     public static void CreateSamplesFromCombinedFileUsesExpectedSplit()
     {
         using var temp = new TempDir();
@@ -204,7 +207,7 @@ internal static class SetupSamplesFactoryTests
             TrainingFraction = 0.5
         };
 
-        var samples = SetupSamplesFactory.CreateSamples(temp.Path, fileDto, null, nbrOutputs: 1, rnd: new Random(1));
+        var samples = SamplesFactory.CreateSamples(temp.Path, fileDto, null, nbrOutputs: 1, rnd: new Random(1));
 
         TestAssert.Equal(2, samples.TrainingInputs.Length, "Training sample count");
         TestAssert.Equal(2, samples.TestingInputs.Length, "Testing sample count");
@@ -226,7 +229,7 @@ internal static class SetupSamplesFactoryTests
         };
 
         TestAssert.Throws<InvalidOperationException>(
-            () => SetupSamplesFactory.CreateSamples(temp.Path, fileDto, null, nbrOutputs: 1, rnd: new Random(1)),
+            () => SamplesFactory.CreateSamples(temp.Path, fileDto, null, nbrOutputs: 1, rnd: new Random(1)),
             "Combined file without TrainingFraction should be rejected");
     }
 
@@ -244,7 +247,7 @@ internal static class SetupSamplesFactoryTests
         };
 
         TestAssert.Throws<InvalidOperationException>(
-            () => SetupSamplesFactory.CreateSamples(temp.Path, fileDto, null, nbrOutputs: 1, rnd: new Random(1)),
+            () => SamplesFactory.CreateSamples(temp.Path, fileDto, null, nbrOutputs: 1, rnd: new Random(1)),
             "Separate files with randomization should be rejected");
     }
 
@@ -263,7 +266,7 @@ internal static class SetupSamplesFactoryTests
             ]
         };
 
-        var samples = SetupSamplesFactory.CreateSamples(
+        var samples = SamplesFactory.CreateSamples(
             baseDirPath: Environment.CurrentDirectory,
             fileSamplesGenerator: null,
             functionSamplesGenerator: fnDto,
@@ -294,7 +297,7 @@ internal static class SetupSamplesFactoryTests
         };
 
         TestAssert.Throws<InvalidOperationException>(
-            () => SetupSamplesFactory.CreateSamples(
+            () => SamplesFactory.CreateSamples(
                 baseDirPath: Environment.CurrentDirectory,
                 fileSamplesGenerator: null,
                 functionSamplesGenerator: fnDto,
@@ -323,8 +326,30 @@ internal static class SetupSamplesFactoryTests
         };
 
         TestAssert.Throws<InvalidOperationException>(
-            () => SetupSamplesFactory.CreateSamples(temp.Path, fileDto, fnDto, nbrOutputs: 1, rnd: new Random(1)),
+            () => SamplesFactory.CreateSamples(temp.Path, fileDto, fnDto, nbrOutputs: 1, rnd: new Random(1)),
             "Both generators should be rejected");
+    }
+
+    public static void StaticWrapperDelegatesToResolver()
+    {
+        using var temp = new TempDir();
+        File.WriteAllText(
+            Path.Combine(temp.Path, "combined.csv"),
+            "1,2,0\n3,4,1\n5,6,0\n7,8,1\n");
+
+        var fileDto = new FileSamplesGeneratorDto
+        {
+            CombinedFilePath = "combined.csv",
+            TrainingFraction = 0.5
+        };
+
+        var resolverSamples = SamplesFactory.CreateSamples(temp.Path, fileDto, null, nbrOutputs: 1, rnd: new Random(1));
+        var wrapperSamples = SetupSamplesFactory.CreateSamples(temp.Path, fileDto, null, nbrOutputs: 1, rnd: new Random(1));
+
+        TestAssert.Equal(resolverSamples.TrainingInputs.Length, wrapperSamples.TrainingInputs.Length, "Wrapper training sample count");
+        TestAssert.Equal(resolverSamples.TestingInputs.Length, wrapperSamples.TestingInputs.Length, "Wrapper testing sample count");
+        TestAssert.Equal(resolverSamples.NbrInputs, wrapperSamples.NbrInputs, "Wrapper input dimension");
+        TestAssert.Equal(resolverSamples.NbrOutputs, wrapperSamples.NbrOutputs, "Wrapper output dimension");
     }
 }
 
