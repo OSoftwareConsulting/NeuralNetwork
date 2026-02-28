@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- .NET SDK `10.0.103`
+- .NET SDK `9.0.x`
 - `GeneticAlgorithmLib` repository checked out at:
   - `../GeneticAlgorithm/GeneticAlgorithmLib/GeneticAlgorithmLib.csproj`
 
@@ -14,7 +14,7 @@ If restore fails with `MSB4276` mentioning missing workload locator SDK director
 ./scripts/fix-dotnet-workload-locators.sh
 ```
 
-This creates the missing workload locator SDK stubs under `/usr/lib/dotnet/sdk/10.0.103/Sdks`.
+This creates the missing workload locator SDK stubs under the active SDK's `Sdks` directory.
 
 ## Build commands
 

@@ -322,8 +322,8 @@ internal static class SetupSamplesResolverTests
 internal static class CliBehaviorTests
 {
     private static readonly string RepoRoot = FindRepoRoot();
-    private static readonly string NeuralNetworkDllPath = Path.Combine(RepoRoot, "NeuralNetwork", "bin", "Debug", "net10.0", "NeuralNetwork.dll");
-    private static readonly string TestFuncsDllPath = Path.Combine(RepoRoot, "TestFuncsLib", "bin", "Debug", "net10.0", "TestFuncsLib.dll");
+    private static readonly string NeuralNetworkDllPath = Path.Combine(RepoRoot, "NeuralNetwork", "bin", "Debug", "net9.0", "NeuralNetwork.dll");
+    private static readonly string TestFuncsDllPath = Path.Combine(RepoRoot, "TestFuncsLib", "bin", "Debug", "net9.0", "TestFuncsLib.dll");
 
     public static void CliReturnsNonZeroForMissingFile()
     {

@@ -1,7 +1,7 @@
 {
 	"Debug": false,
 	"AssemblyPaths": [
-		"..\\..\\TestFuncsLib\\bin\\Debug\\net10.0\\TestFuncsLib.dll"
+		"..\\..\\TestFuncsLib\\bin\\Debug\\net9.0\\TestFuncsLib.dll"
 	],
 	"NbrEpochs": 1000,
 	"TrainingRate": [ 0.005, 0.01, 0.025, 0.05 ],
