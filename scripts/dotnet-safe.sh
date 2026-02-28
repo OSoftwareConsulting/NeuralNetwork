@@ -10,5 +10,13 @@ fi
 subcommand="$1"
 shift
 
-# Force single-node MSBuild execution to avoid intermittent project-graph failures.
-exec dotnet "$subcommand" -m:1 "$@"
+# Force single-node MSBuild execution for build-related commands
+# to avoid intermittent project-graph failures in this environment.
+case "$subcommand" in
+  restore|build|test|publish|pack)
+    exec dotnet "$subcommand" -m:1 "$@"
+    ;;
+  *)
+    exec dotnet "$subcommand" "$@"
+    ;;
+esac
