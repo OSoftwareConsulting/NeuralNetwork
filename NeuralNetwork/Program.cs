@@ -26,6 +26,9 @@ public class NeuralNetworkMain
 
     public static void Main(string[] args)
     {
+        bool pauseRequested = args.Contains("--pause", StringComparer.OrdinalIgnoreCase) ||
+                              args.Contains("-p", StringComparer.Ordinal);
+
         try
         {
             Option<FileInfo> fileOption = new("--file", "-f")
@@ -47,7 +50,12 @@ public class NeuralNetworkMain
                 modeOption
             };
 
-            ParseResult parseResult = rootCommand.Parse(args);
+            var argsForParse = args
+                .Where(arg => !string.Equals(arg, "--pause", StringComparison.OrdinalIgnoreCase) &&
+                              !string.Equals(arg, "-p", StringComparison.Ordinal))
+                .ToArray();
+
+            ParseResult parseResult = rootCommand.Parse(argsForParse);
 
             if (parseResult.Errors.Any())
             {
@@ -107,8 +115,25 @@ public class NeuralNetworkMain
         }
         finally
         {
-            Console.WriteLine("\nPress any key to exit...");
-            Console.ReadKey();
+            if (ShouldPauseOnExit(pauseRequested))
+            {
+                Console.WriteLine("\nPress any key to exit...");
+                Console.ReadKey(intercept: true);
+            }
         }
+    }
+
+    private static bool ShouldPauseOnExit(bool pauseRequested)
+    {
+        if (!pauseRequested)
+        {
+            return false;
+        }
+
+        // Pause only when attached to an interactive console.
+        return Environment.UserInteractive &&
+               !Console.IsInputRedirected &&
+               !Console.IsOutputRedirected &&
+               !Console.IsErrorRedirected;
     }
 }
