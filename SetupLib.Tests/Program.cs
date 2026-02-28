@@ -1,5 +1,7 @@
 using SamplesGeneratorLib;
 using SetupLib;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace SetupLib.Tests;
 
@@ -20,7 +22,10 @@ internal static class Program
             ("CreateSamples rejects randomize with separate files", SetupSamplesResolverTests.CreateSamplesRejectsRandomizeWithSeparateFiles),
             ("CreateSamples from function generator returns valid samples", SetupSamplesResolverTests.CreateSamplesFromFunctionGeneratorReturnsValidSamples),
             ("CreateSamples rejects invalid function generator ranges", SetupSamplesResolverTests.CreateSamplesRejectsInvalidFunctionGeneratorRanges),
-            ("CreateSamples rejects multiple generator definitions", SetupSamplesResolverTests.CreateSamplesRejectsMultipleGeneratorDefinitions)
+            ("CreateSamples rejects multiple generator definitions", SetupSamplesResolverTests.CreateSamplesRejectsMultipleGeneratorDefinitions),
+            ("CLI returns non-zero for missing file", CliBehaviorTests.CliReturnsNonZeroForMissingFile),
+            ("CLI pause flag does not block with redirected input", CliBehaviorTests.CliPauseFlagDoesNotBlockWithRedirectedInput),
+            ("CLI returns zero for valid train-and-test setup", CliBehaviorTests.CliReturnsZeroForValidTrainAndTestSetup)
         };
 
         int failures = 0;
@@ -311,6 +316,154 @@ internal static class SetupSamplesResolverTests
         TestAssert.Throws<InvalidOperationException>(
             () => SamplesResolver.CreateSamples(temp.Path, fileDto, fnDto, nbrOutputs: 1, rnd: new Random(1)),
             "Both generators should be rejected");
+    }
+}
+
+internal static class CliBehaviorTests
+{
+    private static readonly string RepoRoot = FindRepoRoot();
+    private static readonly string NeuralNetworkDllPath = Path.Combine(RepoRoot, "NeuralNetwork", "bin", "Debug", "net10.0", "NeuralNetwork.dll");
+    private static readonly string TestFuncsDllPath = Path.Combine(RepoRoot, "TestFuncsLib", "bin", "Debug", "net10.0", "TestFuncsLib.dll");
+
+    public static void CliReturnsNonZeroForMissingFile()
+    {
+        EnsureBuiltArtifactsExist();
+
+        string missingFile = Path.Combine(Path.GetTempPath(), $"missing-setup-{Guid.NewGuid():N}.json");
+        var result = RunCli(["--file", missingFile, "--mode", "t"]);
+
+        TestAssert.Equal(1, result.ExitCode, "Missing setup file should return non-zero exit code");
+        TestAssert.True(result.CombinedOutput.Contains("does not exist", StringComparison.OrdinalIgnoreCase), "Missing setup file should report not found");
+        TestAssert.True(!result.CombinedOutput.Contains("Press any key to exit", StringComparison.Ordinal), "CLI should not pause by default");
+    }
+
+    public static void CliPauseFlagDoesNotBlockWithRedirectedInput()
+    {
+        EnsureBuiltArtifactsExist();
+
+        string missingFile = Path.Combine(Path.GetTempPath(), $"missing-setup-{Guid.NewGuid():N}.json");
+        var result = RunCli(["--file", missingFile, "--mode", "t", "--pause"]);
+
+        TestAssert.Equal(1, result.ExitCode, "Missing setup file with --pause should return non-zero exit code");
+        TestAssert.True(!result.CombinedOutput.Contains("Press any key to exit", StringComparison.Ordinal), "--pause should not force pausing when input/output are redirected");
+    }
+
+    public static void CliReturnsZeroForValidTrainAndTestSetup()
+    {
+        EnsureBuiltArtifactsExist();
+
+        using var temp = new TempDir();
+        string csvPath = Path.Combine(temp.Path, "tiny.csv");
+        File.WriteAllText(csvPath, "0,0,0\n1,0,1\n0,1,1\n1,1,2\n");
+
+        string setupPath = Path.Combine(temp.Path, "tiny.json");
+        string memoryPath = Path.Combine(temp.Path, "tiny.nnm");
+
+        var setup = new
+        {
+            Debug = false,
+            AssemblyPaths = new[] { TestFuncsDllPath },
+            NbrEpochs = 1,
+            TrainingRate = 0.05,
+            TrainingMomentum = 0.01,
+            LayerConfigs = new object[]
+            {
+                new
+                {
+                    NbrOutputs = 3,
+                    ActivationFunction = "NeuralNetworkLib.ActivationFunctions.TanhActivationFunction",
+                    InitialWeightRange = 0.01
+                },
+                new
+                {
+                    NbrOutputs = 1,
+                    ActivationFunction = "NeuralNetworkLib.ActivationFunctions.LinearActivationFunction",
+                    InitialWeightRange = 0.01
+                }
+            },
+            FileSamplesGenerator = new
+            {
+                CombinedFilePath = "tiny.csv",
+                TrainingFraction = 0.5,
+                Separator = ",",
+                SkipRows = 0,
+                SkipColumns = 0,
+                RandomizeSamples = false,
+                NormalizeInputs = false
+            },
+            MemoryFilePath = memoryPath,
+            UserDefinedFunctions = "TestFuncsLib.AbsErrors"
+        };
+
+        File.WriteAllText(setupPath, JsonSerializer.Serialize(setup));
+
+        var result = RunCli(["--file", setupPath, "--mode", "tt"]);
+
+        TestAssert.Equal(0, result.ExitCode, "Valid train-and-test setup should return zero exit code");
+        TestAssert.True(File.Exists(memoryPath), "Expected memory file to be created");
+        TestAssert.True(!result.CombinedOutput.Contains("Press any key to exit", StringComparison.Ordinal), "Default CLI behavior should not pause");
+    }
+
+    private static (int ExitCode, string StdOut, string StdErr, string CombinedOutput) RunCli(string[] args)
+    {
+        var psi = new ProcessStartInfo("dotnet")
+        {
+            UseShellExecute = false,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+
+        psi.ArgumentList.Add(NeuralNetworkDllPath);
+        foreach (string arg in args)
+        {
+            psi.ArgumentList.Add(arg);
+        }
+
+        using var process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start NeuralNetwork process");
+
+        string stdout = process.StandardOutput.ReadToEnd();
+        string stderr = process.StandardError.ReadToEnd();
+
+        if (!process.WaitForExit(60_000))
+        {
+            process.Kill(entireProcessTree: true);
+            throw new InvalidOperationException("NeuralNetwork process timed out");
+        }
+
+        string combined = stdout + (string.IsNullOrEmpty(stderr) ? string.Empty : Environment.NewLine + stderr);
+        return (process.ExitCode, stdout, stderr, combined);
+    }
+
+    private static string FindRepoRoot()
+    {
+        DirectoryInfo directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory != null)
+        {
+            string slnPath = Path.Combine(directory.FullName, "NeuralNetwork.sln");
+            if (File.Exists(slnPath))
+            {
+                return directory.FullName;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new InvalidOperationException("Could not locate repository root containing NeuralNetwork.sln");
+    }
+
+    private static void EnsureBuiltArtifactsExist()
+    {
+        if (!File.Exists(NeuralNetworkDllPath))
+        {
+            throw new InvalidOperationException($"Required artifact not found: {NeuralNetworkDllPath}. Build NeuralNetwork.sln first.");
+        }
+
+        if (!File.Exists(TestFuncsDllPath))
+        {
+            throw new InvalidOperationException($"Required artifact not found: {TestFuncsDllPath}. Build NeuralNetwork.sln first.");
+        }
     }
 }
 

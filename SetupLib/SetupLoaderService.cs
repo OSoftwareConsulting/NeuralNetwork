@@ -1,11 +1,16 @@
 using NeuralNetworkLib;
 using NeuralNetworkLib.ActivationFunctions;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace SetupLib;
 
 internal sealed class SetupLoaderService
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly ISamplesFactory _samplesFactory;
     private readonly ITypeActivator _typeActivator;
     private readonly IPathResolver _pathResolver;
@@ -25,7 +30,7 @@ internal sealed class SetupLoaderService
 
     public NeuralNetworkTestSetup GetNeuralNetworkTestSetup(string setupFilePath)
     {
-        var setup = JsonConvert.DeserializeObject<NeuralNetworkTestSetupDto>(File.ReadAllText(setupFilePath));
+        var setup = JsonSerializer.Deserialize<NeuralNetworkTestSetupDto>(File.ReadAllText(setupFilePath), JsonOptions);
         if (setup == null)
         {
             throw new ArgumentNullException(nameof(setup));
@@ -62,7 +67,7 @@ internal sealed class SetupLoaderService
 
     public NeuralNetworkTrainAndTestSetup GetNeuralNetworkTrainAndTestSetup(string setupFilePath)
     {
-        var setup = JsonConvert.DeserializeObject<NeuralNetworkTrainAndTestSetupDto>(File.ReadAllText(setupFilePath));
+        var setup = JsonSerializer.Deserialize<NeuralNetworkTrainAndTestSetupDto>(File.ReadAllText(setupFilePath), JsonOptions);
         if (setup == null)
         {
             throw new ArgumentNullException(nameof(setup));
@@ -127,7 +132,7 @@ internal sealed class SetupLoaderService
 
     public GeneticAlgorithmSetup GetGeneticAlgorithmSetup(string setupFilePath)
     {
-        var setup = JsonConvert.DeserializeObject<GeneticAlgorithmSetupDto>(File.ReadAllText(setupFilePath));
+        var setup = JsonSerializer.Deserialize<GeneticAlgorithmSetupDto>(File.ReadAllText(setupFilePath), JsonOptions);
         if (setup == null)
         {
             throw new ArgumentNullException(nameof(setup));

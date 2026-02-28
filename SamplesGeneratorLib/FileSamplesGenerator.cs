@@ -167,7 +167,7 @@ public class FileSamplesGenerator : SamplesGenerator
                 {
                     if (values.Length < NbrOutputs)
                     {
-                        throw new InvalidOperationException($"The number of values per record {values.Length} must be less than the number of outputs {NbrOutputs}");
+                        throw new InvalidOperationException($"The number of values per record {values.Length} must be greater than or equal to the number of outputs {NbrOutputs}");
                     }
 
                     // Set the Number of Values Per Record
