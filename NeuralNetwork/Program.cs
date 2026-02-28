@@ -20,14 +20,12 @@ public class NeuralNetworkMain
         GeneticAlgorithm
     }
 
-    /*
-     * --file C:\ov\NeuralNetwork\DataSets\magic04\magic04-ga.json --mode ga
-     */
-
+    /// <summary>
+    /// Entry point for the NeuralNetwork executable
+    /// </summary>
     public static int Main(string[] args)
     {
-        bool pauseRequested = args.Contains("--pause", StringComparer.OrdinalIgnoreCase) ||
-                              args.Contains("-p", StringComparer.Ordinal);
+        bool pauseRequested = false;
 
         int exitCode = 0;
 
@@ -46,18 +44,19 @@ public class NeuralNetworkMain
             modeOption.Arity = ArgumentArity.ExactlyOne;
             modeOption.AcceptOnlyFromAmong("test", "t", "trainandtest", "tt", "geneticalgorithm", "ga");
 
+            Option<bool> pauseOption = new("--pause", "-p")
+            {
+                Description = "Wait for a key press before exiting."
+            };
+
             RootCommand rootCommand = new("Neural Network Training and Testing tool")
             {
                 fileOption,
-                modeOption
+                modeOption,
+                pauseOption
             };
 
-            var argsForParse = args
-                .Where(arg => !string.Equals(arg, "--pause", StringComparison.OrdinalIgnoreCase) &&
-                              !string.Equals(arg, "-p", StringComparison.Ordinal))
-                .ToArray();
-
-            ParseResult parseResult = rootCommand.Parse(argsForParse);
+            ParseResult parseResult = rootCommand.Parse(args);
 
             if (parseResult.Errors.Any())
             {
@@ -69,6 +68,8 @@ public class NeuralNetworkMain
                 Environment.ExitCode = exitCode;
                 return exitCode;
             }
+
+            pauseRequested = parseResult.GetValue(pauseOption);
 
             string filePath = string.Empty;
             if (parseResult.GetValue(fileOption) is FileInfo parsedFile)
