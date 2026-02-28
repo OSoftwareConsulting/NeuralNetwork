@@ -24,10 +24,12 @@ public class NeuralNetworkMain
      * --file C:\ov\NeuralNetwork\DataSets\magic04\magic04-ga.json --mode ga
      */
 
-    public static void Main(string[] args)
+    public static int Main(string[] args)
     {
         bool pauseRequested = args.Contains("--pause", StringComparer.OrdinalIgnoreCase) ||
                               args.Contains("-p", StringComparer.Ordinal);
+
+        int exitCode = 0;
 
         try
         {
@@ -63,7 +65,9 @@ public class NeuralNetworkMain
                 {
                     Console.Error.WriteLine(parseError.Message);
                 }
-                return;
+                exitCode = 1;
+                Environment.ExitCode = exitCode;
+                return exitCode;
             }
 
             string filePath = string.Empty;
@@ -75,13 +79,17 @@ public class NeuralNetworkMain
             if (string.IsNullOrEmpty(filePath))
             {
                 Console.Error.WriteLine($"Must specify an input file");
-                return;
+                exitCode = 1;
+                Environment.ExitCode = exitCode;
+                return exitCode;
             }
 
             if (!File.Exists(filePath))
             {
                 Console.Error.WriteLine($"File '{filePath}' does not exist");
-                return;
+                exitCode = 1;
+                Environment.ExitCode = exitCode;
+                return exitCode;
             }
 
             Modes mode = parseResult.GetValue(modeOption) switch
@@ -112,6 +120,7 @@ public class NeuralNetworkMain
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
+            exitCode = 1;
         }
         finally
         {
@@ -121,6 +130,9 @@ public class NeuralNetworkMain
                 Console.ReadKey(intercept: true);
             }
         }
+
+        Environment.ExitCode = exitCode;
+        return exitCode;
     }
 
     private static bool ShouldPauseOnExit(bool pauseRequested)
