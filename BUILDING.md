@@ -18,8 +18,9 @@ This creates the missing workload locator SDK stubs under the active SDK's `Sdks
 
 ## Build commands
 
-In this environment, default parallel MSBuild execution may fail without surfaced errors.
-Use the provided wrapper that forces single-node mode (`-m:1`):
+On this Ubuntu/.NET 9 environment, default multi-node MSBuild may fail with
+`Build FAILED` and no surfaced warnings or errors.
+Use the provided wrapper for build-related commands because it forces single-node mode (`-m:1`):
 
 ```bash
 ./scripts/dotnet-safe.sh restore NeuralNetwork.sln -v minimal
@@ -37,5 +38,6 @@ Use the provided wrapper that forces single-node mode (`-m:1`):
 
 - If you still see `MSB4276`, re-run:
   - `./scripts/fix-dotnet-workload-locators.sh`
-- If `dotnet restore` or `dotnet build` fails with no explicit error lines, use:
+- If plain `dotnet restore`, `dotnet build`, `dotnet test`, `dotnet publish`, or `dotnet pack`
+  fails with `Build FAILED` and no explicit error lines, use:
   - `./scripts/dotnet-safe.sh <command> ...`

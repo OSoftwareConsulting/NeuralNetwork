@@ -10,8 +10,9 @@ fi
 subcommand="$1"
 shift
 
-# Force single-node MSBuild execution for build-related commands
-# to avoid intermittent project-graph failures in this environment.
+# Force single-node MSBuild execution for build-related commands.
+# On this Linux/.NET SDK setup, default multi-node MSBuild can fail with
+# "Build FAILED" and no surfaced errors, while -m:1 succeeds reliably.
 case "$subcommand" in
   restore|build|test|publish|pack)
     exec dotnet "$subcommand" -m:1 "$@"
