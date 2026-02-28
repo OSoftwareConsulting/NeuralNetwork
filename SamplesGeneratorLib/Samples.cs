@@ -49,7 +49,7 @@ public class Samples
         NbrOutputs = nbrOutputs;
         NbrInputs = nbrValuesPerRecord - nbrOutputs;
 
-        int nbrRecords = records.Count();
+        int nbrRecords = records.Length;
         int nbrTrainingSamples = (int)(nbrRecords * trainingFraction);
         int nbrTestingSamples = nbrRecords - nbrTrainingSamples;
 
@@ -72,7 +72,7 @@ public class Samples
         int nbrValuesPerRecord,
         int nbrOutputs)
     {
-        int nbrRecords = records.Count();
+        int nbrRecords = records.Length;
 
         if ((nbrTrainingSamples <= 0) || (nbrTestingSamples <= 0) || ((nbrTrainingSamples + nbrTestingSamples) != nbrRecords))
         {
@@ -105,7 +105,7 @@ public class Samples
         double[][] records,
         Random rnd)
     {
-        int nbrRecords = records.Count();
+        int nbrRecords = records.Length;
 
         TrainingInputs = new double[nbrTrainingSamples][];
         TrainingTargets = new double[nbrTrainingSamples][];
@@ -185,7 +185,7 @@ public class Samples
             inputFactors[j] = 1d / Math.Pow(10d, Utilities.OrderOfMagnitude(inputs[j]));
         }
 
-        int nbrRecords = records.Count();
+        int nbrRecords = records.Length;
         for (int n = 0; n < nbrRecords; n++)
         {
             inputs = records[n];

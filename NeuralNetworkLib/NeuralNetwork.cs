@@ -36,7 +36,7 @@ public class NeuralNetwork
         this.rnd = rnd;
 
         // The number of layers L
-        int nbrLayers = layerConfigs.Count();
+        int nbrLayers = layerConfigs.Length;
 
         Layers = new TrainingAndTestingNeuronLayer[nbrLayers];
 
@@ -237,7 +237,7 @@ public class NeuralNetwork
         double trainingMomentum)
     {
         // Start from the last layer back to the first layer
-        for (int l = Layers.Count() - 1; l >= 0; l--)
+        for (int l = Layers.Length - 1; l >= 0; l--)
         {
             var layer = Layers[l] as TrainingAndTestingNeuronLayer;
 
