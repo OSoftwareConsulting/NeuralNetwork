@@ -74,7 +74,7 @@ public static class NeuralNetworkSettingGenerator
                 }
 
             default:
-                throw new NotImplementedException();
+                throw new ArgumentOutOfRangeException(nameof(type), type, "Unexpected setting type.");
         }
     }
 
@@ -210,7 +210,10 @@ public class NeuralNetworkInstance : GAIndividual
         return sb.ToString();
     }
 
-    private Setting<T> GetSettingAt<T>(int index) => Chromosome[index] as Setting<T>;
+    private Setting<T> GetSettingAt<T>(int index) =>
+        Chromosome[index] as Setting<T>
+        ?? throw new InvalidOperationException($"Expected a {typeof(T).Name} setting at chromosome index {index}.");
+
     private T GetAt<T>(int index) => GetSettingAt<T>(index).value;
 
     private NeuralNetworkSettings GetNeuralNetworkSettings()
@@ -271,12 +274,13 @@ public class NeuralNetworkGeneticAlgorithm : GeneticAlgorithm
 
     protected override GAIndividual CreateIndividual(bool construct) => new NeuralNetworkInstance(construct);
 
-    protected override void SummarizeGeneration()
+    protected override void SummarizePopulation(bool isInitialPopulation)
     {
-        Console.WriteLine($"Generation: {Generation,4}\n");
+        Console.WriteLine(isInitialPopulation ? $"Initial Population\n" : $"Generation: {Generation,4}\n");                        
+
         foreach (var individual in OrderedPopulation)
         {
-            Console.WriteLine($"{individual.ToString()}\n");
+            Console.WriteLine($"{individual}\n");
         }
 
         var optimalNeuralNetwork = FittestIndividual() as NeuralNetworkInstance;
