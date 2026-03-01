@@ -181,7 +181,7 @@ public class AbsErrors : IUserDefinedFunctions
 
         if (debug)
         {
-            Console.Write($"{index.ToString().PadLeft(4)}, ");
+            Console.Write($"{index,4}, ");
             Utilities.PrintValues(inputs);
             Console.Write(", ");
             Utilities.PrintValues(targets);
@@ -201,7 +201,7 @@ public class AbsErrors : IUserDefinedFunctions
 
         for (int i = 0; i < nbrOutputs; i++)
         {
-            avgAbsError += absErrors[i];
+            avgAbsError += avgAbsErrors[i];
         }
 
         avgAbsError /= nbrOutputs;

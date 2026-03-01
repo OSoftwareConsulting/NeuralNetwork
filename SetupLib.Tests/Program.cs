@@ -2,6 +2,7 @@ using SamplesGeneratorLib;
 using SetupLib;
 using System.Diagnostics;
 using System.Text.Json;
+using TestFuncsLib;
 
 namespace SetupLib.Tests;
 
@@ -23,6 +24,7 @@ internal static class Program
             ("CreateSamples from function generator returns valid samples", SetupSamplesResolverTests.CreateSamplesFromFunctionGeneratorReturnsValidSamples),
             ("CreateSamples rejects invalid function generator ranges", SetupSamplesResolverTests.CreateSamplesRejectsInvalidFunctionGeneratorRanges),
             ("CreateSamples rejects multiple generator definitions", SetupSamplesResolverTests.CreateSamplesRejectsMultipleGeneratorDefinitions),
+            ("AbsErrors score uses averaged test-set error", UserDefinedFunctionsTests.AbsErrorsScoreUsesAveragedTestSetError),
             ("CLI returns non-zero for missing file", CliBehaviorTests.CliReturnsNonZeroForMissingFile),
             ("CLI pause flag does not block with redirected input", CliBehaviorTests.CliPauseFlagDoesNotBlockWithRedirectedInput),
             ("CLI returns zero for valid train-and-test setup", CliBehaviorTests.CliReturnsZeroForValidTrainAndTestSetup)
@@ -316,6 +318,35 @@ internal static class SetupSamplesResolverTests
         TestAssert.Throws<InvalidOperationException>(
             () => SamplesResolver.CreateSamples(temp.Path, fileDto, fnDto, nbrOutputs: 1, rnd: new Random(1)),
             "Both generators should be rejected");
+    }
+}
+
+internal static class UserDefinedFunctionsTests
+{
+    public static void AbsErrorsScoreUsesAveragedTestSetError()
+    {
+        var udf = new AbsErrors();
+        udf.Configure(nbrInputs: 1, nbrOutputs: 2);
+
+        udf.ProcessTestResult(
+            index: 0,
+            inputs: [0.0],
+            targets: [1.0, 3.0],
+            outputs: [0.0, 1.0],
+            debug: false);
+
+        udf.ProcessTestResult(
+            index: 1,
+            inputs: [1.0],
+            targets: [5.0, 4.0],
+            outputs: [4.0, 4.0],
+            debug: false);
+
+        // Per-output average absolute errors are:
+        // output 0: (1 + 1) / 2 = 1
+        // output 1: (2 + 0) / 2 = 1
+        // Overall score should therefore be 1.
+        TestAssert.NearlyEqual(1.0, udf.ComputeScore(), 1e-12, "AbsErrors should score using average error across all test samples");
     }
 }
 

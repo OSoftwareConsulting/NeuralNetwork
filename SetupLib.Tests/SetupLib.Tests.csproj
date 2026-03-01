@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SetupLib\SetupLib.csproj" />
     <ProjectReference Include="..\SamplesGeneratorLib\SamplesGeneratorLib.csproj" />
+    <ProjectReference Include="..\TestFuncsLib\TestFuncsLib.csproj" />
   </ItemGroup>
 
 </Project>

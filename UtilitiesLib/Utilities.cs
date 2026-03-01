@@ -44,7 +44,7 @@ public static class Utilities
         string format = defDblFmt,
         bool addEOL = false)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
 
         for (int i = 0; i < values.Length; i++)
         {
