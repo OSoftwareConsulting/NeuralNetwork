@@ -153,12 +153,12 @@ public class NeuralNetworkInstance : GAIndividual
             rnd: gaSetup.Rnd,
             debug: gaSetup.Debug,
             samples: gaSetup.Samples,
-            layerConfigs: layerConfigs.ToArray(),
+            layerConfigs: [.. layerConfigs],
             memoryFilePath: gaSetup.MemoryFilePath,
             nbrEpochs: gaSetup.NbrEpochs,
             trainingRate: settings.TrainingRate,
             trainingMomentum: settings.TrainingMomentum,
-            userDefinedFunctions: gaSetup.UserDefinedFunctions);
+            userDefinedFunctions: gaSetup.CreateUserDefinedFunctions());
 
         Console.WriteLine($"Computing Fitness: {Id}\n\n{ToString()}");
 

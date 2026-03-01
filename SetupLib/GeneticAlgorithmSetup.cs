@@ -75,8 +75,8 @@ public class GeneticAlgorithmSetup
 
     // Testing
 
-    // The user-defined functions used during neural network training and testing (see IUserDefinedFunctions)
-    public IUserDefinedFunctions UserDefinedFunctions { get; }
+    // Factory used to create fresh user-defined functions instances for each neural network evaluation
+    private readonly Func<IUserDefinedFunctions> _userDefinedFunctionsFactory;
 
     // Genetic Algorithm
 
@@ -107,7 +107,7 @@ public class GeneticAlgorithmSetup
         int nbrEpochs,
         double[] trainingRate,
         double[] trainingMomentum,
-        IUserDefinedFunctions userDefinedFunctions,
+        Func<IUserDefinedFunctions> userDefinedFunctionsFactory,
         int populationSize,
         double selectionPercentage,
         double matingPercentage,
@@ -124,11 +124,13 @@ public class GeneticAlgorithmSetup
         NbrEpochs = nbrEpochs;
         TrainingRate = trainingRate;
         TrainingMomentum = trainingMomentum;
-        UserDefinedFunctions = userDefinedFunctions;
+        _userDefinedFunctionsFactory = userDefinedFunctionsFactory;
         PopulationSize = populationSize;
         SelectionPercentage = selectionPercentage;
         MatingPercentage = matingPercentage;
         MutationProbability = mutationProbability;
         FitnessLowerBetter = fitnessLowerBetter;
     }
+
+    public IUserDefinedFunctions CreateUserDefinedFunctions() => _userDefinedFunctionsFactory();
 }

@@ -156,7 +156,7 @@ internal sealed class SetupLoaderService
 
         var gaNeuronLayerConfig = new GANeuronLayerConfig(
             setup.LayerConfig.NbrOutputs,
-            activationFunctions.ToArray(),
+            [.. activationFunctions],
             setup.LayerConfig.InitialWeightRange);
 
         var samples = _samplesFactory.CreateSamples(
@@ -179,8 +179,6 @@ internal sealed class SetupLoaderService
 
         SetupValidators.ValidateUserDefinedFunctions(setup.UserDefinedFunctions);
 
-        var userDefinedFunctions = GetUserDefinedFunctionsInstance(setup.UserDefinedFunctions);
-
         SetupValidators.ValidateNbrEpochs(setup.NbrEpochs);
 
         return new GeneticAlgorithmSetup(
@@ -194,7 +192,7 @@ internal sealed class SetupLoaderService
             setup.NbrEpochs,
             setup.TrainingRate,
             setup.TrainingMomentum,
-            userDefinedFunctions,
+            () => GetUserDefinedFunctionsInstance(setup.UserDefinedFunctions),
             setup.PopulationSize,
             setup.SelectionPercentage,
             setup.MatingPercentage,
