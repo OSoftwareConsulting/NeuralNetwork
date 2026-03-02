@@ -180,7 +180,7 @@ internal static class SetupSamplesResolverTests
     public static void CreateSamplesRejectsMissingGeneratorDefinitions()
     {
         TestAssert.Throws<InvalidOperationException>(
-            () => SamplesResolver.CreateSamples(Environment.CurrentDirectory, null, null, nbrOutputs: 1, rnd: new Random(1)),
+            () => SamplesResolver.CreateSamples(Environment.CurrentDirectory, new SamplesGeneratorOptions(), nbrOutputs: 1, rnd: new Random(1)),
             "Missing generators should be rejected");
     }
 
@@ -197,7 +197,11 @@ internal static class SetupSamplesResolverTests
             TrainingFraction = 0.5
         };
 
-        var samples = SamplesResolver.CreateSamples(temp.Path, fileDto, null, nbrOutputs: 1, rnd: new Random(1));
+        var samples = SamplesResolver.CreateSamples(
+            temp.Path,
+            new SamplesGeneratorOptions { File = fileDto },
+            nbrOutputs: 1,
+            rnd: new Random(1));
 
         TestAssert.Equal(2, samples.TrainingInputs.Length, "Training sample count");
         TestAssert.Equal(2, samples.TestingInputs.Length, "Testing sample count");
@@ -219,7 +223,11 @@ internal static class SetupSamplesResolverTests
         };
 
         TestAssert.Throws<InvalidOperationException>(
-            () => SamplesResolver.CreateSamples(temp.Path, fileDto, null, nbrOutputs: 1, rnd: new Random(1)),
+            () => SamplesResolver.CreateSamples(
+                temp.Path,
+                new SamplesGeneratorOptions { File = fileDto },
+                nbrOutputs: 1,
+                rnd: new Random(1)),
             "Combined file without TrainingFraction should be rejected");
     }
 
@@ -237,7 +245,11 @@ internal static class SetupSamplesResolverTests
         };
 
         TestAssert.Throws<InvalidOperationException>(
-            () => SamplesResolver.CreateSamples(temp.Path, fileDto, null, nbrOutputs: 1, rnd: new Random(1)),
+            () => SamplesResolver.CreateSamples(
+                temp.Path,
+                new SamplesGeneratorOptions { File = fileDto },
+                nbrOutputs: 1,
+                rnd: new Random(1)),
             "Separate files with randomization should be rejected");
     }
 
@@ -258,8 +270,7 @@ internal static class SetupSamplesResolverTests
 
         var samples = SamplesResolver.CreateSamples(
             baseDirPath: Environment.CurrentDirectory,
-            fileSamplesGenerator: null,
-            functionSamplesGenerator: fnDto,
+            options: new SamplesGeneratorOptions { Function = fnDto },
             nbrOutputs: 1,
             rnd: new Random(7));
 
@@ -289,8 +300,7 @@ internal static class SetupSamplesResolverTests
         TestAssert.Throws<InvalidOperationException>(
             () => SamplesResolver.CreateSamples(
                 baseDirPath: Environment.CurrentDirectory,
-                fileSamplesGenerator: null,
-                functionSamplesGenerator: fnDto,
+                options: new SamplesGeneratorOptions { Function = fnDto },
                 nbrOutputs: 1,
                 rnd: new Random(3)),
             "Function generator without ranges should be rejected");
@@ -316,7 +326,11 @@ internal static class SetupSamplesResolverTests
         };
 
         TestAssert.Throws<InvalidOperationException>(
-            () => SamplesResolver.CreateSamples(temp.Path, fileDto, fnDto, nbrOutputs: 1, rnd: new Random(1)),
+            () => SamplesResolver.CreateSamples(
+                temp.Path,
+                new SamplesGeneratorOptions { File = fileDto, Function = fnDto },
+                nbrOutputs: 1,
+                rnd: new Random(1)),
             "Both generators should be rejected");
     }
 }

@@ -27,7 +27,7 @@ public class FunctionSamplesGenerator : SamplesGenerator
         {
             if (maxValue < minValue)
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("Maximum value must be greater than or equal to minimum value.");
             }
 
             MinValue = minValue;

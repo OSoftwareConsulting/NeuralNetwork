@@ -4,12 +4,11 @@ namespace SetupLib;
 
 internal interface ISamplesGeneratorStrategy
 {
-    bool CanHandle(FileSamplesGeneratorDto fileSamplesGenerator, FunctionSamplesGeneratorDto functionSamplesGenerator);
+    bool CanHandle(SamplesGeneratorOptions options);
 
     Samples Generate(
         string baseDirPath,
-        FileSamplesGeneratorDto fileSamplesGenerator,
-        FunctionSamplesGeneratorDto functionSamplesGenerator,
+        SamplesGeneratorOptions options,
         int nbrOutputs,
         Random rnd);
 }

@@ -42,10 +42,15 @@ internal sealed class SetupLoaderService
 
         Random rnd = setup.Seed.HasValue ? new Random(setup.Seed.Value) : new Random();
 
+        var samplesGeneratorOptions = new SamplesGeneratorOptions
+        {
+            File = setup.FileSamplesGenerator,
+            Function = setup.FunctionSamplesGenerator
+        };
+
         var samples = _samplesFactory.CreateSamples(
             baseDirPath,
-            setup.FileSamplesGenerator,
-            setup.FunctionSamplesGenerator,
+            samplesGeneratorOptions,
             setup.NbrOutputs,
             rnd);
 
@@ -101,10 +106,15 @@ internal sealed class SetupLoaderService
 
         int nbrOutputs = neuronLayerConfigs[nbrLayers - 1].NbrOutputs;
 
+        var samplesGeneratorOptions = new SamplesGeneratorOptions
+        {
+            File = setup.FileSamplesGenerator,
+            Function = setup.FunctionSamplesGenerator
+        };
+
         var samples = _samplesFactory.CreateSamples(
             baseDirPath,
-            setup.FileSamplesGenerator,
-            setup.FunctionSamplesGenerator,
+            samplesGeneratorOptions,
             nbrOutputs,
             rnd);
 
@@ -159,10 +169,15 @@ internal sealed class SetupLoaderService
             [.. activationFunctions],
             setup.LayerConfig.InitialWeightRange);
 
+        var samplesGeneratorOptions = new SamplesGeneratorOptions
+        {
+            File = setup.FileSamplesGenerator,
+            Function = setup.FunctionSamplesGenerator
+        };
+
         var samples = _samplesFactory.CreateSamples(
             baseDirPath,
-            setup.FileSamplesGenerator,
-            setup.FunctionSamplesGenerator,
+            samplesGeneratorOptions,
             setup.NbrOutputs,
             rnd);
 

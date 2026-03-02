@@ -19,7 +19,7 @@ public abstract class SamplesGenerator
     {
         if (nbrOutputs < 1)
         {
-            throw new InvalidOperationException();
+            throw new InvalidOperationException("Number of outputs must be greater than 0.");
         }
 
         NbrValuesPerRecord = 0;

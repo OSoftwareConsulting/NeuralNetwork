@@ -11,18 +11,19 @@ internal sealed class FunctionSamplesGeneratorStrategy : ISamplesGeneratorStrate
         _typeActivator = typeActivator ?? throw new ArgumentNullException(nameof(typeActivator));
     }
 
-    public bool CanHandle(FileSamplesGeneratorDto fileSamplesGenerator, FunctionSamplesGeneratorDto functionSamplesGenerator)
+    public bool CanHandle(SamplesGeneratorOptions options)
     {
-        return functionSamplesGenerator?.SamplesGeneratorFunction != null;
+        return options?.Function?.SamplesGeneratorFunction != null;
     }
 
     public Samples Generate(
         string baseDirPath,
-        FileSamplesGeneratorDto fileSamplesGenerator,
-        FunctionSamplesGeneratorDto functionSamplesGenerator,
+        SamplesGeneratorOptions options,
         int nbrOutputs,
         Random rnd)
     {
+        var functionSamplesGenerator = options.Function;
+
         ISamplesGeneratorFunction dataGeneratorFunction =
             (ISamplesGeneratorFunction)_typeActivator.GetInstance(functionSamplesGenerator.SamplesGeneratorFunction);
         if (dataGeneratorFunction == null)

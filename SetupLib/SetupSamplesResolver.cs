@@ -11,6 +11,11 @@ internal sealed class SetupSamplesResolver : ISamplesFactory
     {
     }
 
+    /// <summary>
+    /// Lists all of the known and used Samples Generators
+    /// </summary>
+    /// <param name="typeActivator"></param>
+    /// <param name="pathResolver"></param>
     public SetupSamplesResolver(ITypeActivator typeActivator, IPathResolver pathResolver)
         : this(
         [
@@ -27,31 +32,29 @@ internal sealed class SetupSamplesResolver : ISamplesFactory
 
     public Samples CreateSamples(
         string baseDirPath,
-        FileSamplesGeneratorDto fileSamplesGenerator,
-        FunctionSamplesGeneratorDto functionSamplesGenerator,
+        SamplesGeneratorOptions options,
         int nbrOutputs,
         Random rnd)
     {
-        ValidateSingleSamplesGenerator(fileSamplesGenerator, functionSamplesGenerator);
+        ValidateSingleSamplesGenerator(options);
 
         foreach (var strategy in _strategies)
         {
-            if (strategy.CanHandle(fileSamplesGenerator, functionSamplesGenerator))
+            if (strategy.CanHandle(options))
             {
-                return strategy.Generate(baseDirPath, fileSamplesGenerator, functionSamplesGenerator, nbrOutputs, rnd);
+                return strategy.Generate(baseDirPath, options, nbrOutputs, rnd);
             }
         }
 
+        // Should not get here due to the validation
         throw new InvalidOperationException("Must specify one and only one Samples Generator");
     }
 
-    private static void ValidateSingleSamplesGenerator(
-        FileSamplesGeneratorDto fileSamplesGenerator,
-        FunctionSamplesGeneratorDto functionSamplesGenerator)
+    private static void ValidateSingleSamplesGenerator(SamplesGeneratorOptions options)
     {
         int nbrGenerators =
-            (fileSamplesGenerator == null ? 0 : 1) +
-            (functionSamplesGenerator == null ? 0 : 1);
+            (options?.File == null ? 0 : 1) +
+            (options?.Function == null ? 0 : 1);
 
         if (nbrGenerators != 1)
         {
