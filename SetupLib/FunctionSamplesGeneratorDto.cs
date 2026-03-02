@@ -8,7 +8,7 @@
 namespace SetupLib;
 
 // Used to create training and testing samples by calling a function with random inputs between min & max values
-public class FunctionSamplesGeneratorDto
+public class FunctionSamplesGeneratorDto : SamplesGeneratorDto
 {
     public string SamplesGeneratorFunction { get; set; }
 

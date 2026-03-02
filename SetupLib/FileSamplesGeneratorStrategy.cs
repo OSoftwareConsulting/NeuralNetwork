@@ -17,18 +17,19 @@ internal sealed class FileSamplesGeneratorStrategy : ISamplesGeneratorStrategy
         _pathResolver = pathResolver ?? throw new ArgumentNullException(nameof(pathResolver));
     }
 
-    public bool CanHandle(SamplesGeneratorOptions options)
+    public bool CanHandle(SamplesGeneratorDto samplesGenerator)
     {
-        return options?.File != null;
+        return samplesGenerator is FileSamplesGeneratorDto;
     }
 
     public Samples Generate(
         string baseDirPath,
-        SamplesGeneratorOptions options,
+        SamplesGeneratorDto samplesGenerator,
         int nbrOutputs,
         Random rnd)
     {
-        var fileSamplesGenerator = options.File;
+        var fileSamplesGenerator = samplesGenerator as FileSamplesGeneratorDto
+            ?? throw new InvalidOperationException("Expected a file samples generator configuration.");
 
         if (!string.IsNullOrEmpty(fileSamplesGenerator.CombinedFilePath))
         {

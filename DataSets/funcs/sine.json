@@ -19,7 +19,8 @@
       "InitialWeightRange": 0.01
     }
   ],
-  "FunctionSamplesGenerator": {
+  "SamplesGenerator": {
+    "Type": "Function",
     "SamplesGeneratorFunction": "TestFuncsLib.MathSin",
     "NbrRecords": 1000,
     "TrainingFraction": 0.8,

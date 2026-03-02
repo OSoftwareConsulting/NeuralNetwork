@@ -4,7 +4,8 @@
     "../../TestFuncsLib/bin/Debug/net9.0/TestFuncsLib.dll"
   ],
   "NbrOutputs": 2,
-  "FileSamplesGenerator": {
+  "SamplesGenerator": {
+    "Type": "File",
     "CombinedFilePath": "magic04.csv",
     "TrainingFraction": 0.8,
     "Separator": ",",

@@ -32,17 +32,17 @@ internal sealed class SetupSamplesResolver : ISamplesFactory
 
     public Samples CreateSamples(
         string baseDirPath,
-        SamplesGeneratorOptions options,
+        SamplesGeneratorDto samplesGenerator,
         int nbrOutputs,
         Random rnd)
     {
-        ValidateSingleSamplesGenerator(options);
+        ValidateSingleSamplesGenerator(samplesGenerator);
 
         foreach (var strategy in _strategies)
         {
-            if (strategy.CanHandle(options))
+            if (strategy.CanHandle(samplesGenerator))
             {
-                return strategy.Generate(baseDirPath, options, nbrOutputs, rnd);
+                return strategy.Generate(baseDirPath, samplesGenerator, nbrOutputs, rnd);
             }
         }
 
@@ -50,13 +50,9 @@ internal sealed class SetupSamplesResolver : ISamplesFactory
         throw new InvalidOperationException("Must specify one and only one Samples Generator");
     }
 
-    private static void ValidateSingleSamplesGenerator(SamplesGeneratorOptions options)
+    private static void ValidateSingleSamplesGenerator(SamplesGeneratorDto samplesGenerator)
     {
-        int nbrGenerators =
-            (options?.File == null ? 0 : 1) +
-            (options?.Function == null ? 0 : 1);
-
-        if (nbrGenerators != 1)
+        if (samplesGenerator == null)
         {
             throw new InvalidOperationException("Must specify one and only one Samples Generator");
         }

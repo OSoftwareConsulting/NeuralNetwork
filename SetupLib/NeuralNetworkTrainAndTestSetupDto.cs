@@ -16,9 +16,7 @@ public class NeuralNetworkTrainAndTestSetupDto
 
     public int? Seed { get; set; }
 
-    public FileSamplesGeneratorDto FileSamplesGenerator { get; set; }
-
-    public FunctionSamplesGeneratorDto FunctionSamplesGenerator { get; set; }
+    public SamplesGeneratorDto SamplesGenerator { get; set; }
 
     public NeuronLayerConfigDto[] LayerConfigs { get; set; }
 

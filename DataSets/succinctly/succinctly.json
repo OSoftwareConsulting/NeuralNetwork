@@ -18,7 +18,8 @@
       "InitialWeightRange": 0.01
     }
   ],
-  "FileSamplesGenerator": {
+  "SamplesGenerator": {
+    "Type": "File",
     "CombinedFilePath": "succinctly.csv",
     "TrainingFraction": 0.8,
     "Separator": ",",

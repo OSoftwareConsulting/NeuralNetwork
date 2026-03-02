@@ -18,7 +18,8 @@
       "InitialWeightRange": 0.075
     }
   ],
-  "FileSamplesGenerator": {
+  "SamplesGenerator": {
+    "Type": "File",
     "CombinedFilePath": "magic04.csv",
     "TrainingFraction": 0.8,
     "Separator": ",",

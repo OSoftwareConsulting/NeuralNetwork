@@ -5,8 +5,6 @@
  * All Rights Reserved
 */
 
-using NeuralNetworkLib;
-
 namespace SetupLib;
 
 public static class SetupLoader

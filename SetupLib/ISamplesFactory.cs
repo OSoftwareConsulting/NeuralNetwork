@@ -6,7 +6,7 @@ internal interface ISamplesFactory
 {
     Samples CreateSamples(
         string baseDirPath,
-        SamplesGeneratorOptions options,
+        SamplesGeneratorDto samplesGenerator,
         int nbrOutputs,
         Random rnd);
 }

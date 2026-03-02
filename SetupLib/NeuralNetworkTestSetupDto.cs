@@ -18,9 +18,7 @@ public class NeuralNetworkTestSetupDto
 
     public int NbrOutputs { get; set; }
 
-    public FileSamplesGeneratorDto FileSamplesGenerator { get; set; }
-
-    public FunctionSamplesGeneratorDto FunctionSamplesGenerator { get; set; }
+    public SamplesGeneratorDto SamplesGenerator { get; set; }
 
     public string MemoryFilePath { get; set; }
 

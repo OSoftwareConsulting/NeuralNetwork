@@ -18,7 +18,8 @@
 		"InitialWeightRange": [ 0.01, 0.1 ]
 	},
 	"OutputLayerActivationFunction": "NeuralNetworkLib.ActivationFunctions.SoftMaxActivationFunction",
-	"FileSamplesGenerator": {
+	"SamplesGenerator": {
+    "Type": "File",
 		"TrainingFilePath": "mnist_train_data.csv",
 		"TestingFilePath": "mnist_test_data.csv"
 	},

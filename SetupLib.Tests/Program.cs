@@ -23,7 +23,7 @@ internal static class Program
             ("CreateSamples rejects randomize with separate files", SetupSamplesResolverTests.CreateSamplesRejectsRandomizeWithSeparateFiles),
             ("CreateSamples from function generator returns valid samples", SetupSamplesResolverTests.CreateSamplesFromFunctionGeneratorReturnsValidSamples),
             ("CreateSamples rejects invalid function generator ranges", SetupSamplesResolverTests.CreateSamplesRejectsInvalidFunctionGeneratorRanges),
-            ("CreateSamples rejects multiple generator definitions", SetupSamplesResolverTests.CreateSamplesRejectsMultipleGeneratorDefinitions),
+            ("Setup DTO deserializes polymorphic samples generator", SetupSamplesResolverTests.SetupDtoDeserializesPolymorphicSamplesGenerator),
             ("AbsErrors score uses averaged test-set error", UserDefinedFunctionsTests.AbsErrorsScoreUsesAveragedTestSetError),
             ("CLI returns non-zero for missing file", CliBehaviorTests.CliReturnsNonZeroForMissingFile),
             ("CLI pause flag does not block with redirected input", CliBehaviorTests.CliPauseFlagDoesNotBlockWithRedirectedInput),
@@ -180,7 +180,7 @@ internal static class SetupSamplesResolverTests
     public static void CreateSamplesRejectsMissingGeneratorDefinitions()
     {
         TestAssert.Throws<InvalidOperationException>(
-            () => SamplesResolver.CreateSamples(Environment.CurrentDirectory, new SamplesGeneratorOptions(), nbrOutputs: 1, rnd: new Random(1)),
+            () => SamplesResolver.CreateSamples(Environment.CurrentDirectory, null, nbrOutputs: 1, rnd: new Random(1)),
             "Missing generators should be rejected");
     }
 
@@ -199,7 +199,7 @@ internal static class SetupSamplesResolverTests
 
         var samples = SamplesResolver.CreateSamples(
             temp.Path,
-            new SamplesGeneratorOptions { File = fileDto },
+            fileDto,
             nbrOutputs: 1,
             rnd: new Random(1));
 
@@ -225,7 +225,7 @@ internal static class SetupSamplesResolverTests
         TestAssert.Throws<InvalidOperationException>(
             () => SamplesResolver.CreateSamples(
                 temp.Path,
-                new SamplesGeneratorOptions { File = fileDto },
+                fileDto,
                 nbrOutputs: 1,
                 rnd: new Random(1)),
             "Combined file without TrainingFraction should be rejected");
@@ -247,7 +247,7 @@ internal static class SetupSamplesResolverTests
         TestAssert.Throws<InvalidOperationException>(
             () => SamplesResolver.CreateSamples(
                 temp.Path,
-                new SamplesGeneratorOptions { File = fileDto },
+                fileDto,
                 nbrOutputs: 1,
                 rnd: new Random(1)),
             "Separate files with randomization should be rejected");
@@ -270,7 +270,7 @@ internal static class SetupSamplesResolverTests
 
         var samples = SamplesResolver.CreateSamples(
             baseDirPath: Environment.CurrentDirectory,
-            options: new SamplesGeneratorOptions { Function = fnDto },
+            samplesGenerator: fnDto,
             nbrOutputs: 1,
             rnd: new Random(7));
 
@@ -300,38 +300,40 @@ internal static class SetupSamplesResolverTests
         TestAssert.Throws<InvalidOperationException>(
             () => SamplesResolver.CreateSamples(
                 baseDirPath: Environment.CurrentDirectory,
-                options: new SamplesGeneratorOptions { Function = fnDto },
+                samplesGenerator: fnDto,
                 nbrOutputs: 1,
                 rnd: new Random(3)),
             "Function generator without ranges should be rejected");
     }
 
-    public static void CreateSamplesRejectsMultipleGeneratorDefinitions()
+    public static void SetupDtoDeserializesPolymorphicSamplesGenerator()
     {
-        using var temp = new TempDir();
-        File.WriteAllText(Path.Combine(temp.Path, "combined.csv"), "1,2,0\n3,4,1\n");
-
-        var fileDto = new FileSamplesGeneratorDto
+        const string json = """
         {
-            CombinedFilePath = "combined.csv",
-            TrainingFraction = 0.5
-        };
+          "Debug": false,
+          "NbrOutputs": 1,
+          "SamplesGenerator": {
+            "Type": "Function",
+            "SamplesGeneratorFunction": "TestFuncsLib.MathSin",
+            "NbrRecords": 10,
+            "TrainingFraction": 0.5,
+            "ValueRanges": [
+              {
+                "MinValue": 0.0,
+                "MaxValue": 1.0
+              }
+            ]
+          }
+        }
+        """;
 
-        var fnDto = new FunctionSamplesGeneratorDto
+        var setup = JsonSerializer.Deserialize<NeuralNetworkTestSetupDto>(json, new JsonSerializerOptions
         {
-            SamplesGeneratorFunction = typeof(LinearSamplesGeneratorFunction).AssemblyQualifiedName,
-            NbrRecords = 10,
-            TrainingFraction = 0.5,
-            ValueRanges = [new ValueRangeDto { MinValue = 0, MaxValue = 1 }]
-        };
+            PropertyNameCaseInsensitive = true
+        });
 
-        TestAssert.Throws<InvalidOperationException>(
-            () => SamplesResolver.CreateSamples(
-                temp.Path,
-                new SamplesGeneratorOptions { File = fileDto, Function = fnDto },
-                nbrOutputs: 1,
-                rnd: new Random(1)),
-            "Both generators should be rejected");
+        TestAssert.True(setup != null, "Setup DTO should deserialize");
+        TestAssert.True(setup.SamplesGenerator is FunctionSamplesGeneratorDto, "SamplesGenerator should deserialize to FunctionSamplesGeneratorDto");
     }
 }
 
@@ -426,8 +428,9 @@ internal static class CliBehaviorTests
                     InitialWeightRange = 0.01
                 }
             },
-            FileSamplesGenerator = new
+            SamplesGenerator = new
             {
+                Type = "File",
                 CombinedFilePath = "tiny.csv",
                 TrainingFraction = 0.5,
                 Separator = ",",

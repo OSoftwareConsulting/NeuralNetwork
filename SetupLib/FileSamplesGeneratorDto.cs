@@ -8,7 +8,7 @@
 namespace SetupLib;
 
 // Used to create training and testing samples from a file
-public class FileSamplesGeneratorDto
+public class FileSamplesGeneratorDto : SamplesGeneratorDto
 {
     public string CombinedFilePath { get; set; }
 
